@@ -2,8 +2,16 @@
 require_once __DIR__ . '/includes/config.php';
 requireLogin();
 
-// Get analytics data
-$employeeGrowth = $db->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM employees GROUP BY DATE_FORMAT(created_at, '%Y-%m') ORDER BY month DESC LIMIT 12");
+// Get analytics data - cumulative employee growth
+$beforeWindow = date('Y-m', strtotime("-12 months"));
+$baseCountRes = $db->query("SELECT COUNT(*) as base_count FROM employees WHERE DATE_FORMAT(created_at, '%Y-%m') <= '$beforeWindow'");
+$baseCount = $baseCountRes->fetch_assoc()['base_count'];
+
+$employeeGrowth = $db->query("SELECT DATE_FORMAT(created_at, '%Y-%m') as month, COUNT(*) as count FROM employees WHERE DATE_FORMAT(created_at, '%Y-%m') > '$beforeWindow' GROUP BY DATE_FORMAT(created_at, '%Y-%m')");
+$growthDataMap = [];
+while ($row = $employeeGrowth->fetch_assoc()) {
+    $growthDataMap[$row['month']] = $row['count'];
+}
 $attendanceTrend = $db->query("SELECT DATE_FORMAT(date, '%Y-%m-%d') as day, COUNT(*) as present FROM attendance WHERE status = 'present' AND date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) GROUP BY day ORDER BY day");
 $departmentStats = $db->query("SELECT d.name, COUNT(e.id) as count, AVG(e.salary) as avg_salary FROM departments d LEFT JOIN employees e ON d.id = e.department_id GROUP BY d.id, d.name");
 ?>
@@ -220,15 +228,21 @@ endwhile; ?>
                 labels: <?php
 $growthLabels = [];
 $growthData = [];
-while ($row = $employeeGrowth->fetch_assoc()) {
-    $growthLabels[] = date('M Y', strtotime($row['month'] . '-01'));
-    $growthData[] = $row['count'];
+$currentTotal = $baseCount;
+
+for ($i = 11; $i >= 0; $i--) {
+    $monthKey = date('Y-m', strtotime("-$i months"));
+    $newCount = isset($growthDataMap[$monthKey]) ? $growthDataMap[$monthKey] : 0;
+    $currentTotal += $newCount;
+
+    $growthLabels[] = date('M Y', strtotime("-$i months"));
+    $growthData[] = $currentTotal;
 }
-echo json_encode(array_reverse($growthLabels));
+echo json_encode($growthLabels);
 ?>,
                 datasets: [{
-                    label: 'New Employees',
-                    data: <?php echo json_encode(array_reverse($growthData)); ?>,
+                    label: 'Total Employees',
+                    data: <?php echo json_encode($growthData); ?>,
                     borderColor: '#0ea5e9',
                     backgroundColor: 'rgba(14, 165, 233, 0.1)',
                     fill: true,
