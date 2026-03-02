@@ -72,14 +72,6 @@ $departmentStats = $db->query("SELECT d.name, COUNT(e.id) as count, AVG(e.salary
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Payroll</span>
                     </a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">AI Features</div>
-                    <a href="ai-features.php" class="nav-item">
-                        <i class="fas fa-robot"></i>
-                        <span>AI Insights</span>
-                    </a>
                     <a href="analytics.php" class="nav-item active">
                         <i class="fas fa-chart-line"></i>
                         <span>Analytics</span>

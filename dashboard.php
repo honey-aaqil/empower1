@@ -82,14 +82,6 @@ $deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departm
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Payroll</span>
                     </a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">AI Features</div>
-                    <a href="ai-features.php" class="nav-item">
-                        <i class="fas fa-robot"></i>
-                        <span>AI Insights</span>
-                    </a>
                     <a href="analytics.php" class="nav-item">
                         <i class="fas fa-chart-line"></i>
                         <span>Analytics</span>
@@ -209,63 +201,6 @@ endif; ?>
                 </div>
             </div>
 
-            <!-- AI Insights Section -->
-            <div class="ai-section">
-                <div class="ai-header">
-                    <div class="ai-brain-icon">
-                        <div class="ai-brain-ring ai-brain-ring-1"></div>
-                        <div class="ai-brain-ring ai-brain-ring-2"></div>
-                        <div class="ai-brain-ring ai-brain-ring-3"></div>
-                        <div class="ai-brain-core">
-                            <i class="fas fa-brain"></i>
-                        </div>
-                        <div class="ai-particle" style="--angle: 0deg; --delay: 0s;"></div>
-                        <div class="ai-particle" style="--angle: 60deg; --delay: 0.5s;"></div>
-                        <div class="ai-particle" style="--angle: 120deg; --delay: 1s;"></div>
-                        <div class="ai-particle" style="--angle: 180deg; --delay: 1.5s;"></div>
-                        <div class="ai-particle" style="--angle: 240deg; --delay: 2s;"></div>
-                        <div class="ai-particle" style="--angle: 300deg; --delay: 2.5s;"></div>
-                    </div>
-                    <div>
-                        <div class="ai-title">AI-Powered Insights</div>
-                        <div class="ai-subtitle">Leverage Google AI Studio for intelligent analysis</div>
-                    </div>
-                </div>
-                
-                <div class="ai-features-grid">
-                    <div class="ai-feature-card" onclick="location.href='ai-features.php?tab=sentiment'">
-                        <div class="ai-feature-icon" style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: white;">
-                            <i class="fas fa-smile"></i>
-                        </div>
-                        <h4>Sentiment Analysis</h4>
-                        <p>Analyze employee feedback and satisfaction using AI</p>
-                    </div>
-                    
-                    <div class="ai-feature-card" onclick="location.href='ai-features.php?tab=prediction'">
-                        <div class="ai-feature-icon" style="background: linear-gradient(135deg, #8b5cf6, #a78bfa); color: white;">
-                            <i class="fas fa-chart-line"></i>
-                        </div>
-                        <h4>Performance Prediction</h4>
-                        <p>Predict future performance trends with machine learning</p>
-                    </div>
-                    
-                    <div class="ai-feature-card" onclick="location.href='ai-features.php?tab=jobdesc'">
-                        <div class="ai-feature-icon" style="background: linear-gradient(135deg, #10b981, #34d399); color: white;">
-                            <i class="fas fa-file-alt"></i>
-                        </div>
-                        <h4>Job Description Generator</h4>
-                        <p>Generate professional job descriptions automatically</p>
-                    </div>
-                    
-                    <div class="ai-feature-card" onclick="location.href='ai-features.php?tab=team'">
-                        <div class="ai-feature-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white;">
-                            <i class="fas fa-users"></i>
-                        </div>
-                        <h4>Team Dynamics</h4>
-                        <p>Analyze and optimize team collaboration patterns</p>
-                    </div>
-                </div>
-            </div>
 
             <!-- Charts Row -->
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 25px; margin-bottom: 25px;">

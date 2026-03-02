@@ -1,6 +1,6 @@
 <?php
-ini_set('display_errors', '0');
-error_reporting(0);
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
 ob_start();
 
 header('Content-Type: application/json');
@@ -23,7 +23,6 @@ try {
     require_once __DIR__ . '/../includes/config.php';
     $diagnostics['config_loaded'] = true;
     $diagnostics['db_connected'] = isset($db) ? true : false;
-    $diagnostics['google_ai_url'] = GOOGLE_AI_API_URL ?? 'not set';
     $diagnostics['session_started'] = session_status() === PHP_SESSION_ACTIVE;
     $diagnostics['session_id'] = session_id() ?: 'none';
     $diagnostics['logged_in'] = isLoggedIn();

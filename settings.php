@@ -59,11 +59,6 @@ $stats = [
                     <a href="attendance.php" class="nav-item"><i class="fas fa-clock"></i><span>Attendance</span></a>
                     <a href="leave.php" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Leave Requests</span></a>
                     <a href="payroll.php" class="nav-item"><i class="fas fa-money-bill-wave"></i><span>Payroll</span></a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">AI Features</div>
-                    <a href="ai-features.php" class="nav-item"><i class="fas fa-robot"></i><span>AI Insights</span></a>
                     <a href="analytics.php" class="nav-item"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
                 </div>
                 
@@ -173,19 +168,6 @@ endif; ?>
                             
                             <h4 style="margin: 25px 0 15px; color: var(--text-primary); border-top: 1px solid var(--border-color); padding-top: 20px;">Features Toggle</h4>
                             
-                            <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(14, 165, 233, 0.05); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px;">
-                                <div>
-                                    <div style="font-weight: 600;">AI Insights Integration</div>
-                                    <div style="font-size: 0.85rem; color: var(--text-muted);">Enable Google AI Studio features across the system.</div>
-                                </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
-                                    <input type="checkbox" checked style="opacity: 0; width: 0; height: 0;">
-                                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--primary-color); border-radius: 24px;">
-                                        <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 28px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s;"></span>
-                                    </span>
-                                </label>
-                            </div>
-
                             <div style="display: flex; align-items: center; justify-content: space-between; padding: 15px; background: rgba(14, 165, 233, 0.05); border: 1px solid var(--border-color); border-radius: 8px;">
                                 <div>
                                     <div style="font-weight: 600;">Employee Self-Service</div>

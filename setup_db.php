@@ -15,6 +15,10 @@ $sqlContent = str_replace('employee_management', DB_NAME, $sqlContent);
 $sqlContent = preg_replace('/--.*$/m', '', $sqlContent);
 $sqlContent = preg_replace('/^\s*$/m', '', $sqlContent);
 
+// Remove ai_analysis table dropping and creation scripts
+$sqlContent = preg_replace('/DROP TABLE IF EXISTS `?ai_analysis`?;?\s*/i', '', $sqlContent);
+$sqlContent = preg_replace('/CREATE TABLE `?ai_analysis`?.*?ENGINE=InnoDB;?\s*/is', '', $sqlContent);
+
 // Split into individual queries
 $queries = array_filter(array_map('trim', explode(';', $sqlContent)));
 

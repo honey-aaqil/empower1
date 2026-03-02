@@ -112,11 +112,6 @@ $years = range(date('Y') - 5, date('Y') + 1);
                     <a href="attendance.php" class="nav-item"><i class="fas fa-clock"></i><span>Attendance</span></a>
                     <a href="leave.php" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Leave Requests</span></a>
                     <a href="payroll.php" class="nav-item active"><i class="fas fa-money-bill-wave"></i><span>Payroll</span></a>
-                </div>
-                
-                <div class="nav-section">
-                    <div class="nav-section-title">AI Features</div>
-                    <a href="ai-features.php" class="nav-item"><i class="fas fa-robot"></i><span>AI Insights</span></a>
                     <a href="analytics.php" class="nav-item"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
                 </div>
                 
