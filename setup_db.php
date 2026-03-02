@@ -28,14 +28,15 @@ foreach ($queries as $query) {
     if (empty($query))
         continue;
 
-    // Using mysqli_query directly to see errors easily
-    if (mysqli_query($conn, $query)) {
-        $success++;
-        echo "Success: " . substr($query, 0, 50) . "...\n";
+    try {
+        if (mysqli_query($conn, $query)) {
+            $success++;
+            echo "Success: " . substr($query, 0, 50) . "...\n";
+        }
     }
-    else {
+    catch (Exception $e) {
         $failed++;
-        echo "Error: " . mysqli_error($conn) . " Query: " . substr($query, 0, 50) . "...\n";
+        echo "Skipped: " . $e->getMessage() . " Query: " . substr($query, 0, 50) . "...\n";
     }
 }
 
