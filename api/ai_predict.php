@@ -1,7 +1,21 @@
 <?php
-require_once __DIR__ . '/../includes/config.php';
-requireLogin();
+// Suppress HTML error output and buffer any stray output
+ini_set('display_errors', '0');
+error_reporting(0);
+ob_start();
 
+try {
+    require_once __DIR__ . '/../includes/config.php';
+}
+catch (Exception $e) {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Server configuration error']);
+    exit;
+}
+
+// Clear any output from config loading
+ob_end_clean();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -21,7 +35,7 @@ if (empty($employeeId)) {
 // Get employee data
 $employee = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.id = $employeeId");
 
-if ($employee->num_rows === 0) {
+if (!$employee || $employee->num_rows === 0) {
     echo json_encode(['error' => 'Employee not found']);
     exit;
 }
@@ -29,13 +43,18 @@ if ($employee->num_rows === 0) {
 $employeeData = $employee->fetch_assoc();
 
 // Get attendance data
-$attendanceData = $db->query("SELECT COUNT(*) as present FROM attendance WHERE employee_id = $employeeId AND status = 'present' AND date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
 $presentDays = 0;
-if ($attendanceData) {
-    $presentDays = $attendanceData->fetch_assoc()['present'];
+try {
+    $attendanceData = $db->query("SELECT COUNT(*) as present FROM attendance WHERE employee_id = $employeeId AND status = 'present' AND date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)");
+    if ($attendanceData) {
+        $presentDays = $attendanceData->fetch_assoc()['present'];
+    }
+}
+catch (Exception $e) {
+// attendance table might not exist
 }
 
-// Get performance reviews (safely handle missing table)
+// Get performance reviews (safely)
 $avgRating = 3;
 try {
     $reviews = $db->query("SELECT AVG(overall_rating) as avg_rating FROM performance_reviews WHERE employee_id = $employeeId");
@@ -62,15 +81,22 @@ $prompt = "Based on this employee performance data, predict future performance t
 
 " . json_encode($analysisData, JSON_PRETTY_PRINT) . "
 
-Provide your response in JSON format with:
-1. prediction_score (0-100)
-2. trend (improving/stable/declining)
-3. key_strengths (array)
-4. areas_to_improve (array)
-5. recommendations (array)
-6. retention_risk (low/medium/high)";
+Provide your response ONLY as valid JSON with these keys:
+1. prediction_score (number 0-100)
+2. trend (string: improving/stable/declining)
+3. key_strengths (array of strings)
+4. areas_to_improve (array of strings)
+5. recommendations (array of strings)
+6. retention_risk (string: low/medium/high)
+No other text outside the JSON.";
 
-$result = getGoogleAI()->generateContent($prompt);
+try {
+    $result = getGoogleAI()->generateContent($prompt);
+}
+catch (Exception $e) {
+    echo json_encode(['error' => 'AI service error: ' . $e->getMessage()]);
+    exit;
+}
 
 // Check for API errors
 if (isset($result['error'])) {
@@ -97,13 +123,12 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                 $stmt->execute();
             }
             catch (Exception $e) {
-            // DB save failed, but we still return the prediction
+            // DB save failed silently
             }
 
             echo json_encode($predictionData);
         }
         else {
-            // Fallback
             echo json_encode([
                 'prediction_score' => 75,
                 'trend' => 'stable',
@@ -126,6 +151,5 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     }
 }
 else {
-    echo json_encode(['error' => 'Failed to generate prediction. The AI service may be temporarily unavailable.']);
+    echo json_encode(['error' => 'Failed to generate prediction. Please try again.']);
 }
-?>

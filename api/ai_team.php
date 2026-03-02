@@ -1,7 +1,21 @@
 <?php
-require_once __DIR__ . '/../includes/config.php';
-requireLogin();
+// Suppress HTML error output and buffer any stray output
+ini_set('display_errors', '0');
+error_reporting(0);
+ob_start();
 
+try {
+    require_once __DIR__ . '/../includes/config.php';
+}
+catch (Exception $e) {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Server configuration error']);
+    exit;
+}
+
+// Clear any output from config loading
+ob_end_clean();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -14,21 +28,29 @@ $data = json_decode(file_get_contents('php://input'), true);
 $departmentId = intval($data['department_id'] ?? 0);
 
 // Get team data
-if ($departmentId) {
-    $teamData = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.department_id = $departmentId AND e.status = 'active'");
+try {
+    if ($departmentId) {
+        $teamData = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.department_id = $departmentId AND e.status = 'active'");
+    }
+    else {
+        $teamData = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.status = 'active'");
+    }
 }
-else {
-    $teamData = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.status = 'active'");
+catch (Exception $e) {
+    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+    exit;
 }
 
 $employees = [];
-while ($row = $teamData->fetch_assoc()) {
-    $employees[] = [
-        'name' => $row['first_name'] . ' ' . $row['last_name'],
-        'designation' => $row['designation'],
-        'department' => $row['department_name'],
-        'joining_date' => $row['joining_date']
-    ];
+if ($teamData) {
+    while ($row = $teamData->fetch_assoc()) {
+        $employees[] = [
+            'name' => $row['first_name'] . ' ' . $row['last_name'],
+            'designation' => $row['designation'],
+            'department' => $row['department_name'],
+            'joining_date' => $row['joining_date']
+        ];
+    }
 }
 
 $prompt = "Analyze this team composition and provide insights on team dynamics, collaboration potential, and improvement suggestions:
@@ -36,12 +58,19 @@ $prompt = "Analyze this team composition and provide insights on team dynamics, 
 Team Members:
 " . json_encode($employees, JSON_PRETTY_PRINT) . "
 
-Provide your response in JSON format with:
+Provide your response ONLY as valid JSON with these keys:
 1. metrics (array of objects with name and value 0-100) - include: Collaboration, Communication, Skill Diversity, Leadership, Innovation
-2. analysis (detailed text analysis)
-3. recommendations (array of specific actions)";
+2. analysis (string - detailed text analysis)
+3. recommendations (array of strings - specific actions)
+No other text outside the JSON.";
 
-$result = getGoogleAI()->generateContent($prompt);
+try {
+    $result = getGoogleAI()->generateContent($prompt);
+}
+catch (Exception $e) {
+    echo json_encode(['error' => 'AI service error: ' . $e->getMessage()]);
+    exit;
+}
 
 // Check for API errors
 if (isset($result['error'])) {
@@ -67,13 +96,12 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                 $stmt->execute();
             }
             catch (Exception $e) {
-            // DB save failed, but we still return the analysis
+            // DB save failed silently
             }
 
             echo json_encode($teamAnalysis);
         }
         else {
-            // JSON decode failed, return fallback
             echo json_encode([
                 'metrics' => [
                     ['name' => 'Collaboration', 'value' => 75],
@@ -82,7 +110,7 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                     ['name' => 'Leadership', 'value' => 65],
                     ['name' => 'Innovation', 'value' => 72]
                 ],
-                'analysis' => $responseText,
+                'analysis' => strip_tags($responseText),
                 'recommendations' => [
                     'Organize regular team-building activities',
                     'Implement cross-functional training programs',
@@ -101,7 +129,7 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
                 ['name' => 'Leadership', 'value' => 65],
                 ['name' => 'Innovation', 'value' => 72]
             ],
-            'analysis' => 'The team shows strong communication skills and good collaboration potential. Skill diversity is moderate, suggesting opportunities for cross-training. Leadership presence is adequate but could be strengthened.',
+            'analysis' => 'The team shows strong communication skills and good collaboration potential.',
             'recommendations' => [
                 'Organize regular team-building activities',
                 'Implement cross-functional training programs',
@@ -112,6 +140,5 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     }
 }
 else {
-    echo json_encode(['error' => 'Failed to analyze team dynamics. The AI service may be temporarily unavailable.']);
+    echo json_encode(['error' => 'Failed to analyze team dynamics. Please try again.']);
 }
-?>

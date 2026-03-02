@@ -307,6 +307,26 @@ endwhile; ?>
 
     <script src="assets/js/main.js"></script>
     <script>
+        // Helper: safe fetch that always returns JSON
+        async function safeFetch(url, data) {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify(data)
+            });
+            
+            const text = await response.text();
+            
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                // Response is not JSON - likely HTML error page
+                console.error('Non-JSON response from ' + url + ':', text.substring(0, 200));
+                return { error: 'Server returned an invalid response. Please try again or re-login.' };
+            }
+        }
+
         // Sentiment Analysis
         document.getElementById('analyzeSentiment').addEventListener('click', async function() {
             const feedback = document.getElementById('feedbackText').value;
@@ -319,13 +339,7 @@ endwhile; ?>
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
             
             try {
-                const response = await fetch('api/ai_sentiment.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ feedback })
-                });
-                
-                const result = await response.json();
+                const result = await safeFetch('api/ai_sentiment.php', { feedback });
                 
                 if (result.error) {
                     showToast(result.error, 'error');
@@ -346,7 +360,7 @@ endwhile; ?>
                             <div>
                                 <h5 style="margin-bottom: 10px;">Suggestions:</h5>
                                 <ul style="padding-left: 20px; color: var(--text-secondary);">
-                                    ${result.suggestions.map(s => `<li style="margin-bottom: 5px;">${s}</li>`).join('')}
+                                    ${(result.suggestions || []).map(s => `<li style="margin-bottom: 5px;">${s}</li>`).join('')}
                                 </ul>
                             </div>
                         </div>
@@ -372,13 +386,7 @@ endwhile; ?>
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Predicting...';
             
             try {
-                const response = await fetch('api/ai_predict.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ employee_id: employeeId })
-                });
-                
-                const result = await response.json();
+                const result = await safeFetch('api/ai_predict.php', { employee_id: employeeId });
                 
                 if (result.error) {
                     showToast(result.error, 'error');
@@ -399,13 +407,13 @@ endwhile; ?>
                                 <div>
                                     <h5 style="margin-bottom: 10px; color: var(--success-color);">Key Strengths</h5>
                                     <ul style="padding-left: 20px; font-size: 0.9rem;">
-                                        ${result.key_strengths.map(s => `<li>${s}</li>`).join('')}
+                                        ${(result.key_strengths || []).map(s => `<li>${s}</li>`).join('')}
                                     </ul>
                                 </div>
                                 <div>
                                     <h5 style="margin-bottom: 10px; color: var(--warning-color);">Areas to Improve</h5>
                                     <ul style="padding-left: 20px; font-size: 0.9rem;">
-                                        ${result.areas_to_improve.map(a => `<li>${a}</li>`).join('')}
+                                        ${(result.areas_to_improve || []).map(a => `<li>${a}</li>`).join('')}
                                     </ul>
                                 </div>
                             </div>
@@ -413,7 +421,7 @@ endwhile; ?>
                             <div>
                                 <h5 style="margin-bottom: 10px;">Recommendations</h5>
                                 <ul style="padding-left: 20px; font-size: 0.9rem;">
-                                    ${result.recommendations.map(r => `<li>${r}</li>`).join('')}
+                                    ${(result.recommendations || []).map(r => `<li>${r}</li>`).join('')}
                                 </ul>
                             </div>
                             
@@ -427,7 +435,7 @@ endwhile; ?>
                     `;
                 }
             } catch (error) {
-                showToast('Error predicting performance', 'error');
+                showToast('Error predicting performance: ' + error.message, 'error');
             } finally {
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-brain"></i> Predict Performance';
@@ -448,13 +456,7 @@ endwhile; ?>
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             
             try {
-                const response = await fetch('api/ai_jobdesc.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ role, requirements })
-                });
-                
-                const result = await response.json();
+                const result = await safeFetch('api/ai_jobdesc.php', { role, requirements });
                 
                 if (result.error) {
                     showToast(result.error, 'error');
@@ -474,7 +476,7 @@ endwhile; ?>
                     `;
                 }
             } catch (error) {
-                showToast('Error generating job description', 'error');
+                showToast('Error generating job description: ' + error.message, 'error');
             } finally {
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-magic"></i> Generate Description';
@@ -489,13 +491,7 @@ endwhile; ?>
             this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analyzing...';
             
             try {
-                const response = await fetch('api/ai_team.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ department_id: departmentId })
-                });
-                
-                const result = await response.json();
+                const result = await safeFetch('api/ai_team.php', { department_id: departmentId });
                 
                 if (result.error) {
                     showToast(result.error, 'error');
@@ -505,7 +501,7 @@ endwhile; ?>
                             <h4 style="margin-bottom: 20px;">Team Dynamics Analysis</h4>
                             
                             <div style="margin-bottom: 20px;">
-                                ${result.metrics.map(m => `
+                                ${(result.metrics || []).map(m => `
                                     <div style="margin-bottom: 15px;">
                                         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
                                             <span>${m.name}</span>
@@ -519,14 +515,14 @@ endwhile; ?>
                             </div>
                             
                             <div style="background: white; padding: 15px; border-radius: var(--border-radius);">
-                                <h5 style="margin-bottom: 10px;">Analysis & Recommendations</h5>
+                                <h5 style="margin-bottom: 10px;">Analysis &amp; Recommendations</h5>
                                 <p style="color: var(--text-secondary); line-height: 1.6;">${result.analysis}</p>
                             </div>
                         </div>
                     `;
                 }
             } catch (error) {
-                showToast('Error analyzing team dynamics', 'error');
+                showToast('Error analyzing team dynamics: ' + error.message, 'error');
             } finally {
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-project-diagram"></i> Analyze Team';
@@ -541,7 +537,6 @@ endwhile; ?>
         }
 
         function viewAnalysis(id) {
-            // Load and display analysis details
             showToast('Loading analysis details...', 'info');
         }
     </script>

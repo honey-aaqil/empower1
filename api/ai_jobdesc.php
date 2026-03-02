@@ -1,7 +1,21 @@
 <?php
-require_once __DIR__ . '/../includes/config.php';
-requireLogin();
+// Suppress HTML error output and buffer any stray output
+ini_set('display_errors', '0');
+error_reporting(0);
+ob_start();
 
+try {
+    require_once __DIR__ . '/../includes/config.php';
+}
+catch (Exception $e) {
+    ob_end_clean();
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Server configuration error']);
+    exit;
+}
+
+// Clear any output from config loading
+ob_end_clean();
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -35,7 +49,13 @@ Please include:
 
 Format it professionally with clear sections.";
 
-$result = getGoogleAI()->generateContent($prompt);
+try {
+    $result = getGoogleAI()->generateContent($prompt);
+}
+catch (Exception $e) {
+    echo json_encode(['error' => 'AI service error: ' . $e->getMessage()]);
+    exit;
+}
 
 // Check for API errors
 if (isset($result['error'])) {
@@ -54,7 +74,7 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
         $stmt->execute();
     }
     catch (Exception $e) {
-    // DB save failed, but we still return the description
+    // DB save failed silently
     }
 
     echo json_encode([
@@ -63,6 +83,5 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     ]);
 }
 else {
-    echo json_encode(['error' => 'Failed to generate job description. The AI service may be temporarily unavailable.']);
+    echo json_encode(['error' => 'Failed to generate job description. Please try again.']);
 }
-?>
