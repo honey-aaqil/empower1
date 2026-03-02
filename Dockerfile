@@ -6,8 +6,13 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Fix MPM conflict: disable mpm_event, keep only mpm_prefork
-RUN a2dismod mpm_event 2>/dev/null; a2enmod mpm_prefork
+# Fix MPM conflict: forcefully remove all MPM modules, then enable only prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+    /etc/apache2/mods-enabled/mpm_event.load \
+    /etc/apache2/mods-enabled/mpm_worker.conf \
+    /etc/apache2/mods-enabled/mpm_worker.load \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load
 
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
@@ -21,12 +26,8 @@ COPY . /var/www/html/
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Configure Apache to use Railway's PORT env variable at runtime
-RUN echo 'Listen ${PORT}' > /etc/apache2/ports.conf
-RUN sed -i 's/*:80/*:${PORT}/g' /etc/apache2/sites-available/000-default.conf
+# Copy startup script
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
-# Default port
-ENV PORT=8080
-EXPOSE 8080
-
-CMD ["apache2-foreground"]
+CMD ["/start.sh"]
