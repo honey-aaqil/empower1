@@ -1,7 +1,7 @@
 <?php
-require_once 'includes/config.php';
+require_once __DIR__ . '/includes/config.php';
 
-$sqlFile = 'includes/database.sql';
+$sqlFile = __DIR__ . '/includes/database.sql';
 if (!file_exists($sqlFile)) {
     die("SQL file not found.");
 }
