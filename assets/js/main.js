@@ -162,17 +162,19 @@ function initCharts() {
 
 function renderAttendanceChart(container) {
     const ctx = container.getContext('2d');
+    const chartData = window.dashboardData?.attendance || { labels: [], present: [], absent: [] };
+
     const data = {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+        labels: chartData.labels,
         datasets: [{
             label: 'Present',
-            data: [45, 48, 47, 49, 46],
+            data: chartData.present,
             backgroundColor: 'rgba(14, 165, 233, 0.8)',
             borderColor: '#0ea5e9',
             borderWidth: 2
         }, {
             label: 'Absent',
-            data: [5, 2, 3, 1, 4],
+            data: chartData.absent,
             backgroundColor: 'rgba(239, 68, 68, 0.8)',
             borderColor: '#ef4444',
             borderWidth: 2
@@ -213,20 +215,23 @@ function renderAttendanceChart(container) {
 
 function renderDepartmentChart(container) {
     const ctx = container.getContext('2d');
+    const chartData = window.dashboardData?.departments || { labels: [], data: [] };
 
     new Chart(ctx, {
         type: 'doughnut',
         data: {
-            labels: ['IT', 'HR', 'Finance', 'Marketing', 'Sales', 'Operations'],
+            labels: chartData.labels,
             datasets: [{
-                data: [25, 8, 12, 15, 20, 18],
+                data: chartData.data,
                 backgroundColor: [
                     '#0ea5e9',
                     '#38bdf8',
                     '#22d3ee',
                     '#10b981',
                     '#8b5cf6',
-                    '#f59e0b'
+                    '#f59e0b',
+                    '#ec4899',
+                    '#f43f5e'
                 ],
                 borderWidth: 0
             }]
@@ -250,14 +255,15 @@ function renderDepartmentChart(container) {
 
 function renderPerformanceChart(container) {
     const ctx = container.getContext('2d');
+    const chartData = window.dashboardData?.performance || { labels: [], data: [] };
 
     new Chart(ctx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: chartData.labels,
             datasets: [{
-                label: 'Average Performance',
-                data: [78, 82, 85, 83, 88, 92],
+                label: 'Average Performance (%)',
+                data: chartData.data,
                 borderColor: '#0ea5e9',
                 backgroundColor: 'rgba(14, 165, 233, 0.1)',
                 fill: true,

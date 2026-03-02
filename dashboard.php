@@ -12,10 +12,46 @@ $pendingLeaves = $db->query("SELECT COUNT(*) as count FROM leave_requests WHERE 
 $recentEmployees = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id ORDER BY e.created_at DESC LIMIT 5");
 
 // Get attendance data for chart
-$attendanceData = $db->query("SELECT DATE_FORMAT(date, '%W') as day, COUNT(*) as count FROM attendance WHERE date >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) GROUP BY day, date ORDER BY date");
+$attQuery = $db->query("
+    SELECT DATE_FORMAT(date, '%a') as day, 
+    SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
+    SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count
+    FROM attendance 
+    WHERE date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
+    GROUP BY date, day ORDER BY date ASC LIMIT 5
+");
+$attLabels = [];
+$attPresent = [];
+$attAbsent = [];
+while ($row = $attQuery->fetch_assoc()) {
+    $attLabels[] = $row['day'];
+    $attPresent[] = $row['present_count'];
+    $attAbsent[] = $row['absent_count'];
+}
 
 // Get department distribution
 $deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departments d LEFT JOIN employees e ON d.id = e.department_id GROUP BY d.id, d.name");
+$deptLabels = [];
+$deptData = [];
+while ($row = $deptDistribution->fetch_assoc()) {
+    $deptLabels[] = $row['name'];
+    $deptData[] = $row['count'];
+}
+
+// Prepare performance trends
+$perfQuery = $db->query("
+    SELECT DATE_FORMAT(review_period_start, '%b') as month,
+    AVG(overall_rating) * 20 as avg_score 
+    FROM performance_reviews
+    WHERE review_period_start >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+    GROUP BY MONTH(review_period_start), month ORDER BY review_period_start ASC LIMIT 6
+");
+$perfLabels = [];
+$perfData = [];
+while ($row = $perfQuery->fetch_assoc()) {
+    $perfLabels[] = $row['month'];
+    $perfData[] = round($row['avg_score']);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -368,6 +404,23 @@ endwhile; ?>
     </div>
 
     <script src="assets/js/main.js"></script>
+    <script>
+    window.dashboardData = {
+        attendance: {
+            labels: <?php echo json_encode($attLabels ?: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']); ?>,
+            present: <?php echo json_encode($attPresent ?: [0, 0, 0, 0, 0]); ?>,
+            absent: <?php echo json_encode($attAbsent ?: [0, 0, 0, 0, 0]); ?>
+        },
+        departments: {
+            labels: <?php echo json_encode($deptLabels ?: ['IT', 'HR', 'Finance']); ?>,
+            data: <?php echo json_encode($deptData ?: [1, 1, 1]); ?>
+        },
+        performance: {
+            labels: <?php echo json_encode($perfLabels ?: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']); ?>,
+            data: <?php echo json_encode($perfData ?: [0, 0, 0, 0, 0, 0]); ?>
+        }
+    };
+    </script>
     <script>
     // === Professional Dashboard Animations ===
     document.addEventListener('DOMContentLoaded', () => {
