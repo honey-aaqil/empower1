@@ -6,13 +6,11 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-install mysqli curl \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Fix MPM conflict: disable mpm_event, keep only mpm_prefork
+RUN a2dismod mpm_event 2>/dev/null; a2enmod mpm_prefork
+
 # Enable Apache mod_rewrite
 RUN a2enmod rewrite
-
-# Set the document root
-ENV APACHE_DOCUMENT_ROOT=/var/www/html
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # Allow .htaccess overrides
 RUN sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
@@ -23,11 +21,11 @@ COPY . /var/www/html/
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Railway uses the PORT environment variable
-RUN sed -i 's/Listen 80/Listen ${PORT}/g' /etc/apache2/ports.conf
-RUN sed -i 's/:80/:${PORT}/g' /etc/apache2/sites-available/000-default.conf
+# Configure Apache to use Railway's PORT env variable at runtime
+RUN echo 'Listen ${PORT}' > /etc/apache2/ports.conf
+RUN sed -i 's/*:80/*:${PORT}/g' /etc/apache2/sites-available/000-default.conf
 
-# Use PORT from Railway (default 8080)
+# Default port
 ENV PORT=8080
 EXPOSE 8080
 
