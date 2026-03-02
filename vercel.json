@@ -2,63 +2,63 @@
     "builds": [
         {
             "src": "index.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "login.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "register.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "logout.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "dashboard.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "employees.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "edit-employee.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "departments.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "attendance.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "leave.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "analytics.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "ai-features.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "setup_db.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "fix_admin.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "api/*.php",
-            "use": "vercel-community/php@0.7.2"
+            "use": "vercel-php@0.9.0"
         },
         {
             "src": "assets/**",
