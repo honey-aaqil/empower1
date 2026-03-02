@@ -19,14 +19,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     redirect('attendance.php');
 }
 
-// Get attendance records
-$attendance = $db->query("SELECT a.*, e.first_name, e.last_name, e.employee_code FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.date = CURDATE() ORDER BY a.check_in DESC");
+// Get selected date (default to today)
+$selectedDate = isset($_GET['date']) ? $_GET['date'] : date('Y-m-d');
+// Validate date format
+if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
+    $selectedDate = date('Y-m-d');
+}
+$isToday = ($selectedDate === date('Y-m-d'));
+
+// Get attendance records for the selected date
+$attendance = $db->query("SELECT a.*, e.first_name, e.last_name, e.employee_code FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.date = '$selectedDate' ORDER BY a.check_in DESC");
 
 // Get employee list for check-in
 $employees = $db->query("SELECT id, first_name, last_name, employee_code FROM employees WHERE status = 'active' ORDER BY first_name");
 
 // Get monthly statistics
 $monthStats = $db->query("SELECT status, COUNT(*) as count FROM attendance WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE()) GROUP BY status");
+
+// Get recent attendance history (last 30 days, grouped by date)
+$attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present_count, SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent_count, SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) as late_count, SUM(CASE WHEN a.status = 'on_leave' THEN 1 ELSE 0 END) as leave_count FROM attendance a WHERE a.date <= CURDATE() AND a.date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) GROUP BY a.date ORDER BY a.date DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -220,17 +231,22 @@ $monthStats = $db->query("SELECT status, COUNT(*) as count FROM attendance WHERE
                 </div>
             </div>
 
-            <!-- Today's Attendance -->
+            <!-- Attendance for Selected Date -->
             <div class="content-card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-list" style="color: var(--primary-color);"></i> Today's Attendance</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <input type="date" class="form-input" value="<?php echo date('Y-m-d'); ?>" style="width: 150px;">
-                        <button class="btn btn-secondary">
+                    <h3 class="card-title"><i class="fas fa-list" style="color: var(--primary-color);"></i> <?php echo $isToday ? "Today's" : date('M d, Y', strtotime($selectedDate)); ?> Attendance</h3>
+                    <form method="GET" action="" style="display: flex; gap: 10px;">
+                        <input type="date" name="date" class="form-input" value="<?php echo htmlspecialchars($selectedDate); ?>" style="width: 170px;">
+                        <button type="submit" class="btn btn-secondary">
                             <i class="fas fa-filter"></i>
                             Filter
                         </button>
-                    </div>
+                        <?php if (!$isToday): ?>
+                        <a href="attendance.php" class="btn btn-primary" style="padding: 10px 15px;">
+                            <i class="fas fa-calendar-day"></i> Today
+                        </a>
+                        <?php endif; ?>
+                    </form>
                 </div>
                 <div class="card-body" style="padding: 0;">
                     <table class="data-table">
@@ -342,6 +358,57 @@ $monthStats = $db->query("SELECT status, COUNT(*) as count FROM attendance WHERE
                         }
                         ?>
                     </div>
+                </div>
+            </div>
+
+            <!-- Attendance History -->
+            <div class="content-card" style="margin-top: 25px;">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-history" style="color: var(--primary-color);"></i> Attendance History (Last 30 Days)</h3>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Present</th>
+                                <th>Absent</th>
+                                <th>Late</th>
+                                <th>On Leave</th>
+                                <th>Total</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($attendanceHistory && $attendanceHistory->num_rows > 0): ?>
+                            <?php while ($histRow = $attendanceHistory->fetch_assoc()): ?>
+                            <tr>
+                                <td>
+                                    <strong><?php echo date('M d, Y', strtotime($histRow['date'])); ?></strong>
+                                    <div style="font-size: 0.8rem; color: var(--text-muted);"><?php echo date('l', strtotime($histRow['date'])); ?></div>
+                                </td>
+                                <td><span class="badge badge-success"><?php echo $histRow['present_count']; ?></span></td>
+                                <td><span class="badge badge-danger"><?php echo $histRow['absent_count']; ?></span></td>
+                                <td><span class="badge badge-warning"><?php echo $histRow['late_count']; ?></span></td>
+                                <td><span class="badge badge-info"><?php echo $histRow['leave_count']; ?></span></td>
+                                <td><strong><?php echo $histRow['total_records']; ?></strong></td>
+                                <td>
+                                    <a href="attendance.php?date=<?php echo $histRow['date']; ?>" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.85rem;">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                            <?php else: ?>
+                            <tr>
+                                <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                                    <i class="fas fa-calendar-times" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                                    No attendance history found
+                                </td>
+                            </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </main>
