@@ -5,6 +5,12 @@ requireLogin();
 // Handle leave request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apply_leave'])) {
     $employeeId = intval($_POST['employee_id']);
+    
+    if ($employeeId <= 0) {
+        redirect('leave.php?msg=invalid_emp');
+        exit;
+    }
+    
     $leaveType = sanitize($_POST['leave_type']);
     $startDate = sanitize($_POST['start_date']);
     $endDate = sanitize($_POST['end_date']);
@@ -155,10 +161,17 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
             </div>
 
             <?php if (isset($_GET['msg'])): ?>
+                <?php if ($_GET['msg'] === 'invalid_emp'): ?>
+                <div class="toast danger" style="margin-bottom: 20px; background-color: var(--danger-color); color: white;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span>Your user account is not currently linked to an employee profile.</span>
+                </div>
+                <?php else: ?>
                 <div class="toast success" style="margin-bottom: 20px;">
                     <i class="fas fa-check-circle"></i>
-                    <span>Leave request <?php echo $_GET['msg']; ?> successfully</span>
+                    <span>Leave request <?php echo htmlspecialchars($_GET['msg']); ?> successfully</span>
                 </div>
+                <?php endif; ?>
             <?php endif; ?>
 
             <!-- Leave Stats -->
