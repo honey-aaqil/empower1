@@ -7,7 +7,7 @@ define('DB_PASS', getenv('DB_PASS') ?: 'VBT2RLeJUjJQJn8F');
 define('DB_NAME', getenv('DB_NAME') ?: 'test');
 
 // Google AI Studio API Configuration
-define('GOOGLE_AI_API_KEY', getenv('GOOGLE_AI_API_KEY') ?: 'AIzaSyCOUEXmc-k82Pgv48VBATeotWj7Mg_RFdo');
+define('GOOGLE_AI_API_KEY', getenv('GOOGLE_AI_API_KEY') ?: 'AIzaSyDq3EU_GK5fGFT6v-ilQEhrR-BC-Lhzd2Q');
 define('GOOGLE_AI_API_URL', getenv('GOOGLE_AI_API_URL') ?: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
 
 // Database-backed Session Handler (for serverless / Vercel deployment)
