@@ -35,22 +35,23 @@ Please include:
 
 Format it professionally with clear sections.";
 
-$result = $googleAI->generateContent($prompt);
+$result = getGoogleAI()->generateContent($prompt);
 
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $jobDescription = $result['candidates'][0]['content']['parts'][0]['text'];
-    
+
     // Save to database
     $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result) VALUES ('custom', ?, ?)");
     $inputJson = json_encode(['role' => $role, 'requirements' => $requirements]);
     $stmt->bind_param("ss", $inputJson, $jobDescription);
     $stmt->execute();
-    
+
     echo json_encode([
         'job_description' => nl2br(htmlspecialchars($jobDescription)),
         'raw_description' => $jobDescription
     ]);
-} else {
+}
+else {
     echo json_encode(['error' => 'Failed to generate job description']);
 }
 ?>

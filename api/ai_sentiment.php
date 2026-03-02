@@ -28,17 +28,17 @@ Format your response as JSON with keys: score, analysis, suggestions (array)
 
 Feedback: $feedback";
 
-$result = $googleAI->generateContent($prompt);
+$result = getGoogleAI()->generateContent($prompt);
 
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $responseText = $result['candidates'][0]['content']['parts'][0]['text'];
-    
+
     // Try to extract JSON from response
     preg_match('/\{.*\}/s', $responseText, $matches);
-    
+
     if ($matches) {
         $analysisData = json_decode($matches[0], true);
-        
+
         // Save to database
         $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result, confidence_score) VALUES ('sentiment', ?, ?, ?)");
         $inputJson = json_encode(['feedback' => $feedback]);
@@ -46,9 +46,10 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
         $score = $analysisData['score'] ?? 50;
         $stmt->bind_param("ssd", $inputJson, $resultJson, $score);
         $stmt->execute();
-        
+
         echo json_encode($analysisData);
-    } else {
+    }
+    else {
         // Fallback response
         echo json_encode([
             'score' => 70,
@@ -60,7 +61,8 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
             ]
         ]);
     }
-} else {
+}
+else {
     echo json_encode(['error' => 'Failed to analyze sentiment']);
 }
 ?>

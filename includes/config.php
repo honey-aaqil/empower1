@@ -74,8 +74,9 @@ class Database
     {
         $this->connection = mysqli_init();
 
-        // Connect with SSL flag (MYSQLI_CLIENT_SSL)
-        $connected = $this->connection->real_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT, NULL, MYSQLI_CLIENT_SSL);
+        // Use persistent connection (p: prefix) + SSL for faster serverless reconnects
+        $host = 'p:' . DB_HOST;
+        $connected = $this->connection->real_connect($host, DB_USER, DB_PASS, DB_NAME, DB_PORT, NULL, MYSQLI_CLIENT_SSL);
 
         if (!$connected) {
             die("Connection failed: " . mysqli_connect_error());
@@ -211,15 +212,18 @@ class GoogleAI
 
 // Initialize Database
 $db = new Database();
-$googleAI = new GoogleAI();
 
-// Create sessions table if not exists (for serverless deployment)
-$db->query("CREATE TABLE IF NOT EXISTS sessions (
-    id VARCHAR(128) PRIMARY KEY,
-    data TEXT,
-    expires_at DATETIME NOT NULL,
-    INDEX idx_expires (expires_at)
-)");
+// Lazy-load GoogleAI only when needed (most pages don't use AI)
+function getGoogleAI()
+{
+    static $instance = null;
+    if ($instance === null) {
+        $instance = new GoogleAI();
+    }
+    return $instance;
+}
+// Keep backward compatibility
+$googleAI = null;
 
 // Register database session handler and start session
 $sessionHandler = new DatabaseSessionHandler($db->getConnection());

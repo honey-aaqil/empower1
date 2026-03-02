@@ -186,6 +186,14 @@ CREATE TABLE IF NOT EXISTS activity_logs (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
+-- Sessions Table (for serverless deployment)
+CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    data TEXT,
+    expires_at DATETIME NOT NULL,
+    INDEX idx_expires (expires_at)
+);
+
 -- Insert Default Admin User (password: admin123)
 INSERT INTO users (username, email, password, role) VALUES 
 ('admin', 'admin@company.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');

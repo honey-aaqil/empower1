@@ -16,7 +16,8 @@ $departmentId = intval($data['department_id'] ?? 0);
 // Get team data
 if ($departmentId) {
     $teamData = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.department_id = $departmentId AND e.status = 'active'");
-} else {
+}
+else {
     $teamData = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE e.status = 'active'");
 }
 
@@ -40,25 +41,26 @@ Provide your response in JSON format with:
 2. analysis (detailed text analysis)
 3. recommendations (array of specific actions)";
 
-$result = $googleAI->generateContent($prompt);
+$result = getGoogleAI()->generateContent($prompt);
 
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $responseText = $result['candidates'][0]['content']['parts'][0]['text'];
-    
+
     preg_match('/\{.*\}/s', $responseText, $matches);
-    
+
     if ($matches) {
         $teamAnalysis = json_decode($matches[0], true);
-        
+
         // Save to database
         $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result) VALUES ('team_dynamics', ?, ?)");
         $inputJson = json_encode(['department_id' => $departmentId, 'employee_count' => count($employees)]);
         $resultJson = json_encode($teamAnalysis);
         $stmt->bind_param("ss", $inputJson, $resultJson);
         $stmt->execute();
-        
+
         echo json_encode($teamAnalysis);
-    } else {
+    }
+    else {
         echo json_encode([
             'metrics' => [
                 ['name' => 'Collaboration', 'value' => 75],
@@ -76,7 +78,8 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
             ]
         ]);
     }
-} else {
+}
+else {
     echo json_encode(['error' => 'Failed to analyze team dynamics']);
 }
 ?>

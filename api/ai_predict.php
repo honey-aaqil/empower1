@@ -59,16 +59,16 @@ Provide your response in JSON format with:
 5. recommendations (array)
 6. retention_risk (low/medium/high)";
 
-$result = $googleAI->generateContent($prompt);
+$result = getGoogleAI()->generateContent($prompt);
 
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $responseText = $result['candidates'][0]['content']['parts'][0]['text'];
-    
+
     preg_match('/\{.*\}/s', $responseText, $matches);
-    
+
     if ($matches) {
         $predictionData = json_decode($matches[0], true);
-        
+
         // Save to database
         $stmt = $db->prepare("INSERT INTO ai_analysis (employee_id, analysis_type, input_data, result, confidence_score) VALUES (?, 'performance_prediction', ?, ?, ?)");
         $inputJson = json_encode($analysisData);
@@ -76,9 +76,10 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
         $score = $predictionData['prediction_score'] ?? 70;
         $stmt->bind_param("issd", $employeeId, $inputJson, $resultJson, $score);
         $stmt->execute();
-        
+
         echo json_encode($predictionData);
-    } else {
+    }
+    else {
         echo json_encode([
             'prediction_score' => 75,
             'trend' => 'stable',
@@ -88,7 +89,8 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
             'retention_risk' => 'low'
         ]);
     }
-} else {
+}
+else {
     echo json_encode(['error' => 'Failed to generate prediction']);
 }
 ?>
