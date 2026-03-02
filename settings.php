@@ -50,16 +50,22 @@ $stats = [
                 <div class="nav-section">
                     <div class="nav-section-title">Main</div>
                     <a href="dashboard.php" class="nav-item"><i class="fas fa-home"></i><span>Dashboard</span></a>
+                    <?php if (!isEmployee()): ?>
                     <a href="employees.php" class="nav-item"><i class="fas fa-users"></i><span>Employees</span></a>
                     <a href="departments.php" class="nav-item"><i class="fas fa-building"></i><span>Departments</span></a>
+                    <?php
+endif; ?>
                 </div>
                 
                 <div class="nav-section">
                     <div class="nav-section-title">Management</div>
                     <a href="attendance.php" class="nav-item"><i class="fas fa-clock"></i><span>Attendance</span></a>
                     <a href="leave.php" class="nav-item"><i class="fas fa-calendar-alt"></i><span>Leave Requests</span></a>
+                    <?php if (!isEmployee()): ?>
                     <a href="payroll.php" class="nav-item"><i class="fas fa-money-bill-wave"></i><span>Payroll</span></a>
                     <a href="analytics.php" class="nav-item"><i class="fas fa-chart-line"></i><span>Analytics</span></a>
+                    <?php
+endif; ?>
                 </div>
                 
                 <div class="nav-section">

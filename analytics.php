@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
-requireLogin();
+requireManagement();
 
 // Get analytics data - cumulative employee growth
 $beforeWindow = date('Y-m', strtotime("-12 months"));

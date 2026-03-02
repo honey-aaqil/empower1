@@ -28,7 +28,28 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
 $isToday = ($selectedDate === date('Y-m-d'));
 
 // Get attendance records for the selected date
-$attendance = $db->query("SELECT a.*, e.first_name, e.last_name, e.employee_code FROM attendance a JOIN employees e ON a.employee_id = e.id WHERE a.date = '$selectedDate' ORDER BY a.check_in DESC");
+$attendance = $db->query("
+    SELECT 
+        a.id, a.employee_id, a.date, a.check_in, a.check_out, a.status, a.notes,
+        e.first_name, e.last_name, e.employee_code 
+    FROM attendance a 
+    JOIN employees e ON a.employee_id = e.id 
+    WHERE a.date = '$selectedDate'
+    
+    UNION
+    
+    SELECT 
+        NULL as id, l.employee_id, '$selectedDate' as date, NULL as check_in, NULL as check_out, 'on_leave' as status, l.reason as notes,
+        e.first_name, e.last_name, e.employee_code 
+    FROM leave_requests l 
+    JOIN employees e ON l.employee_id = e.id 
+    WHERE l.status = 'approved' 
+      AND '$selectedDate' BETWEEN l.start_date AND l.end_date 
+      AND l.employee_id NOT IN (
+          SELECT employee_id FROM attendance WHERE date = '$selectedDate'
+      )
+    ORDER BY check_in DESC, first_name ASC
+");
 
 // Get employee list for check-in
 $employees = $db->query("SELECT id, first_name, last_name, employee_code FROM employees WHERE status = 'active' ORDER BY first_name");

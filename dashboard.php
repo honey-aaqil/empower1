@@ -58,6 +58,7 @@ $deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departm
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
+                    <?php if (!isEmployee()): ?>
                     <a href="employees.php" class="nav-item">
                         <i class="fas fa-users"></i>
                         <span>Employees</span>
@@ -66,6 +67,8 @@ $deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departm
                         <i class="fas fa-building"></i>
                         <span>Departments</span>
                     </a>
+                    <?php
+endif; ?>
                 </div>
                 
                 <div class="nav-section">
@@ -78,6 +81,7 @@ $deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departm
                         <i class="fas fa-calendar-alt"></i>
                         <span>Leave Requests</span>
                     </a>
+                    <?php if (!isEmployee()): ?>
                     <a href="payroll.php" class="nav-item">
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Payroll</span>
@@ -86,6 +90,8 @@ $deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departm
                         <i class="fas fa-chart-line"></i>
                         <span>Analytics</span>
                     </a>
+                    <?php
+endif; ?>
                 </div>
                 
                 <div class="nav-section">
@@ -127,10 +133,13 @@ endif; ?>
                 <h1 class="page-title">Dashboard <span>Overview</span></h1>
                 <div class="header-actions">
                     <div class="live-clock" style="font-size: 1.2rem; color: var(--primary-color); font-weight: 600;"></div>
+                    <?php if (!isEmployee()): ?>
                     <button class="btn btn-primary" data-modal="addEmployeeModal">
                         <i class="fas fa-plus"></i>
                         Add Employee
                     </button>
+                    <?php
+endif; ?>
                 </div>
             </div>
 

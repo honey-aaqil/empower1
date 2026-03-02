@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
-requireLogin();
+requireManagement();
 
 // Handle delete action
 if (isset($_GET['delete']) && isAdmin()) {

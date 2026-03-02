@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
-requireLogin();
+requireManagement();
 
 // Handle add department
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_department'])) {

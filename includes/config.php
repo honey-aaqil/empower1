@@ -144,6 +144,24 @@ function requireAdmin()
     }
 }
 
+function isHR()
+{
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'hr';
+}
+
+function isEmployee()
+{
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'employee';
+}
+
+function requireManagement()
+{
+    requireLogin();
+    if (isEmployee()) {
+        redirect('dashboard.php');
+    }
+}
+
 
 
 // Initialize Database

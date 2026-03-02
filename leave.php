@@ -28,7 +28,12 @@ if (isset($_GET['action']) && isset($_GET['id']) && (isAdmin() || $_SESSION['rol
 }
 
 // Get leave requests
-$leaves = $db->query("SELECT l.*, e.first_name, e.last_name, e.employee_code, a.username as approved_by_name FROM leave_requests l JOIN employees e ON l.employee_id = e.id LEFT JOIN users a ON l.approved_by = a.id ORDER BY l.created_at DESC");
+if (isEmployee()) {
+    $empId = $db->query("SELECT id FROM employees WHERE user_id = {$_SESSION['user_id']}")->fetch_assoc()['id'] ?? 0;
+    $leaves = $db->query("SELECT l.*, e.first_name, e.last_name, e.employee_code, a.username as approved_by_name FROM leave_requests l JOIN employees e ON l.employee_id = e.id LEFT JOIN users a ON l.approved_by = a.id WHERE l.employee_id = $empId ORDER BY l.created_at DESC");
+} else {
+    $leaves = $db->query("SELECT l.*, e.first_name, e.last_name, e.employee_code, a.username as approved_by_name FROM leave_requests l JOIN employees e ON l.employee_id = e.id LEFT JOIN users a ON l.approved_by = a.id ORDER BY l.created_at DESC");
+}
 
 // Get employees for dropdown
 $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE status = 'active' ORDER BY first_name");
@@ -264,6 +269,12 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                                             <i class="fas fa-times"></i>
                                         </a>
                                     </div>
+                                    <?php elseif ($leave['status'] === 'pending' && isEmployee()): ?>
+                                    <div class="action-btns">
+                                        <a href="?action=cancel&id=<?php echo $leave['id']; ?>" class="action-btn delete" title="Cancel Request" onclick="return confirm('Are you sure you want to cancel this leave request?');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </div>
                                     <?php else: ?>
                                     <span style="color: var(--text-muted); font-size: 0.85rem;">
                                         <?php echo $leave['approved_by_name'] ? 'By ' . htmlspecialchars($leave['approved_by_name']) : '-'; ?>
@@ -289,12 +300,18 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
             <div class="modal-body">
                 <form id="applyLeaveForm" method="POST" action="">
                     <div class="form-group">
+                        <?php if (isEmployee()): 
+                            $empId = $db->query("SELECT id FROM employees WHERE user_id = {$_SESSION['user_id']}")->fetch_assoc()['id'] ?? 0;
+                        ?>
+                            <input type="hidden" name="employee_id" value="<?php echo $empId; ?>">
+                        <?php else: ?>
                         <label class="form-label">Employee</label>
                         <select name="employee_id" class="form-input" required>
                             <?php while ($emp = $employees->fetch_assoc()): ?>
                             <option value="<?php echo $emp['id']; ?>"><?php echo htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name']); ?></option>
                             <?php endwhile; ?>
                         </select>
+                        <?php endif; ?>
                     </div>
                     
                     <div class="form-group">

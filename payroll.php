@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/includes/config.php';
-requireLogin();
+requireManagement();
 
 $selectedMonth = isset($_GET['month']) ? intval($_GET['month']) : date('n');
 $selectedYear = isset($_GET['year']) ? intval($_GET['year']) : date('Y');
