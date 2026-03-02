@@ -10,8 +10,60 @@ define('DB_NAME', 'test');
 define('GOOGLE_AI_API_KEY', 'AIzaSyCOUEXmc-k82Pgv48VBATeotWj7Mg_RFdo');
 define('GOOGLE_AI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent');
 
-// Session Configuration
-session_start();
+// Database-backed Session Handler (for serverless / Vercel deployment)
+class DatabaseSessionHandler implements SessionHandlerInterface
+{
+    private $conn;
+
+    public function __construct($connection)
+    {
+        $this->conn = $connection;
+    }
+
+    public function open($savePath, $sessionName): bool
+    {
+        return true;
+    }
+
+    public function close(): bool
+    {
+        return true;
+    }
+
+    public function read($id): string|false
+    {
+        $stmt = $this->conn->prepare("SELECT data FROM sessions WHERE id = ? AND expires_at > NOW()");
+        $stmt->bind_param("s", $id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($row = $result->fetch_assoc()) {
+            return $row['data'];
+        }
+        return '';
+    }
+
+    public function write($id, $data): bool
+    {
+        $expires = date('Y-m-d H:i:s', time() + 86400); // 24 hours
+        $stmt = $this->conn->prepare("REPLACE INTO sessions (id, data, expires_at) VALUES (?, ?, ?)");
+        $stmt->bind_param("sss", $id, $data, $expires);
+        return $stmt->execute();
+    }
+
+    public function destroy($id): bool
+    {
+        $stmt = $this->conn->prepare("DELETE FROM sessions WHERE id = ?");
+        $stmt->bind_param("s", $id);
+        return $stmt->execute();
+    }
+
+    public function gc($maxlifetime): int|false
+    {
+        $stmt = $this->conn->prepare("DELETE FROM sessions WHERE expires_at < NOW()");
+        $stmt->execute();
+        return $stmt->affected_rows;
+    }
+}
 
 // Database Connection
 class Database
@@ -160,4 +212,17 @@ class GoogleAI
 // Initialize Database
 $db = new Database();
 $googleAI = new GoogleAI();
+
+// Create sessions table if not exists (for serverless deployment)
+$db->query("CREATE TABLE IF NOT EXISTS sessions (
+    id VARCHAR(128) PRIMARY KEY,
+    data TEXT,
+    expires_at DATETIME NOT NULL,
+    INDEX idx_expires (expires_at)
+)");
+
+// Register database session handler and start session
+$sessionHandler = new DatabaseSessionHandler($db->getConnection());
+session_set_save_handler($sessionHandler, true);
+session_start();
 ?>

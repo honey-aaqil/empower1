@@ -1,0 +1,90 @@
+{
+    "builds": [
+        {
+            "src": "index.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "login.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "register.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "logout.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "dashboard.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "employees.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "edit-employee.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "departments.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "attendance.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "leave.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "analytics.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "ai-features.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "setup_db.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "fix_admin.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "api/*.php",
+            "use": "vercel-community/php@0.7.2"
+        },
+        {
+            "src": "assets/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "index.html",
+            "use": "@vercel/static"
+        }
+    ],
+    "routes": [
+        {
+            "src": "/assets/(.*)",
+            "dest": "/assets/$1"
+        },
+        {
+            "src": "/api/(.*)\\.php",
+            "dest": "/api/$1.php"
+        },
+        {
+            "src": "/(.*)\\.php",
+            "dest": "/$1.php"
+        },
+        {
+            "src": "/",
+            "dest": "/index.php"
+        }
+    ]
+}
