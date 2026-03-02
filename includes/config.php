@@ -1,14 +1,14 @@
 <?php
 // Database Configuration (TiDB Cloud)
-define('DB_HOST', 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com');
-define('DB_PORT', 4000);
-define('DB_USER', 'chsVms76mKp29o2.root');
-define('DB_PASS', 'VBT2RLeJUjJQJn8F');
-define('DB_NAME', 'test');
+define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com');
+define('DB_PORT', getenv('DB_PORT') ?: 4000);
+define('DB_USER', getenv('DB_USER') ?: 'chsVms76mKp29o2.root');
+define('DB_PASS', getenv('DB_PASS') ?: 'VBT2RLeJUjJQJn8F');
+define('DB_NAME', getenv('DB_NAME') ?: 'test');
 
 // Google AI Studio API Configuration
-define('GOOGLE_AI_API_KEY', 'AIzaSyCOUEXmc-k82Pgv48VBATeotWj7Mg_RFdo');
-define('GOOGLE_AI_API_URL', 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent');
+define('GOOGLE_AI_API_KEY', getenv('GOOGLE_AI_API_KEY') ?: 'AIzaSyCOUEXmc-k82Pgv48VBATeotWj7Mg_RFdo');
+define('GOOGLE_AI_API_URL', getenv('GOOGLE_AI_API_URL') ?: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent');
 
 // Database-backed Session Handler (for serverless / Vercel deployment)
 class DatabaseSessionHandler implements SessionHandlerInterface
