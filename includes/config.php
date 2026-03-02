@@ -8,7 +8,7 @@ define('DB_NAME', getenv('DB_NAME') ?: 'test');
 
 // Google AI Studio API Configuration
 define('GOOGLE_AI_API_KEY', getenv('GOOGLE_AI_API_KEY') ?: 'AIzaSyCOUEXmc-k82Pgv48VBATeotWj7Mg_RFdo');
-define('GOOGLE_AI_API_URL', getenv('GOOGLE_AI_API_URL') ?: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent');
+define('GOOGLE_AI_API_URL', getenv('GOOGLE_AI_API_URL') ?: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent');
 
 // Database-backed Session Handler (for serverless / Vercel deployment)
 class DatabaseSessionHandler implements SessionHandlerInterface
@@ -168,21 +168,47 @@ class GoogleAI
                         ['text' => $prompt]
                     ]
                 ]
+            ],
+            'generationConfig' => [
+                'temperature' => 0.7,
+                'maxOutputTokens' => 2048
             ]
         ];
 
-        $ch = curl_init($this->apiUrl . '?key=' . $this->apiKey);
+        $url = $this->apiUrl . '?key=' . $this->apiKey;
+        $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/json'
         ]);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        // SSL handling for serverless environments
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
 
         $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
         curl_close($ch);
 
-        return json_decode($response, true);
+        if ($curlError) {
+            return ['error' => ['message' => 'Connection error: ' . $curlError]];
+        }
+
+        if ($httpCode !== 200) {
+            $decoded = json_decode($response, true);
+            $errorMsg = $decoded['error']['message'] ?? 'API returned HTTP ' . $httpCode;
+            return ['error' => ['message' => $errorMsg]];
+        }
+
+        $decoded = json_decode($response, true);
+        if ($decoded === null) {
+            return ['error' => ['message' => 'Invalid response from AI API']];
+        }
+
+        return $decoded;
     }
 
     public function analyzeEmployeeSentiment($feedback)

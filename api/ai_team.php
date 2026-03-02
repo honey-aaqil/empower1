@@ -43,6 +43,12 @@ Provide your response in JSON format with:
 
 $result = getGoogleAI()->generateContent($prompt);
 
+// Check for API errors
+if (isset($result['error'])) {
+    echo json_encode(['error' => 'AI API Error: ' . ($result['error']['message'] ?? 'Unknown error')]);
+    exit;
+}
+
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $responseText = $result['candidates'][0]['content']['parts'][0]['text'];
 
@@ -51,14 +57,40 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     if ($matches) {
         $teamAnalysis = json_decode($matches[0], true);
 
-        // Save to database
-        $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result) VALUES ('team_dynamics', ?, ?)");
-        $inputJson = json_encode(['department_id' => $departmentId, 'employee_count' => count($employees)]);
-        $resultJson = json_encode($teamAnalysis);
-        $stmt->bind_param("ss", $inputJson, $resultJson);
-        $stmt->execute();
+        if ($teamAnalysis) {
+            // Save to database
+            try {
+                $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result) VALUES ('team_dynamics', ?, ?)");
+                $inputJson = json_encode(['department_id' => $departmentId, 'employee_count' => count($employees)]);
+                $resultJson = json_encode($teamAnalysis);
+                $stmt->bind_param("ss", $inputJson, $resultJson);
+                $stmt->execute();
+            }
+            catch (Exception $e) {
+            // DB save failed, but we still return the analysis
+            }
 
-        echo json_encode($teamAnalysis);
+            echo json_encode($teamAnalysis);
+        }
+        else {
+            // JSON decode failed, return fallback
+            echo json_encode([
+                'metrics' => [
+                    ['name' => 'Collaboration', 'value' => 75],
+                    ['name' => 'Communication', 'value' => 80],
+                    ['name' => 'Skill Diversity', 'value' => 70],
+                    ['name' => 'Leadership', 'value' => 65],
+                    ['name' => 'Innovation', 'value' => 72]
+                ],
+                'analysis' => $responseText,
+                'recommendations' => [
+                    'Organize regular team-building activities',
+                    'Implement cross-functional training programs',
+                    'Establish clear communication channels',
+                    'Set up mentorship opportunities'
+                ]
+            ]);
+        }
     }
     else {
         echo json_encode([
@@ -80,6 +112,6 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     }
 }
 else {
-    echo json_encode(['error' => 'Failed to analyze team dynamics']);
+    echo json_encode(['error' => 'Failed to analyze team dynamics. The AI service may be temporarily unavailable.']);
 }
 ?>

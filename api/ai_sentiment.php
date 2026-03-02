@@ -30,6 +30,12 @@ Feedback: $feedback";
 
 $result = getGoogleAI()->generateContent($prompt);
 
+// Check for API errors
+if (isset($result['error'])) {
+    echo json_encode(['error' => 'AI API Error: ' . ($result['error']['message'] ?? 'Unknown error')]);
+    exit;
+}
+
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $responseText = $result['candidates'][0]['content']['parts'][0]['text'];
 
@@ -39,21 +45,40 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     if ($matches) {
         $analysisData = json_decode($matches[0], true);
 
-        // Save to database
-        $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result, confidence_score) VALUES ('sentiment', ?, ?, ?)");
-        $inputJson = json_encode(['feedback' => $feedback]);
-        $resultJson = json_encode($analysisData);
-        $score = $analysisData['score'] ?? 50;
-        $stmt->bind_param("ssd", $inputJson, $resultJson, $score);
-        $stmt->execute();
+        if ($analysisData && isset($analysisData['score'])) {
+            // Save to database
+            try {
+                $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result, confidence_score) VALUES ('sentiment', ?, ?, ?)");
+                $inputJson = json_encode(['feedback' => $feedback]);
+                $resultJson = json_encode($analysisData);
+                $score = $analysisData['score'] ?? 50;
+                $stmt->bind_param("ssd", $inputJson, $resultJson, $score);
+                $stmt->execute();
+            }
+            catch (Exception $e) {
+            // DB save failed, but we still return the analysis
+            }
 
-        echo json_encode($analysisData);
+            echo json_encode($analysisData);
+        }
+        else {
+            // JSON parsed but missing expected fields - build from response text
+            echo json_encode([
+                'score' => 70,
+                'analysis' => $responseText,
+                'suggestions' => [
+                    'Continue open communication channels',
+                    'Address specific concerns raised',
+                    'Recognize positive contributions'
+                ]
+            ]);
+        }
     }
     else {
-        // Fallback response
+        // Could not extract JSON, use raw text as analysis
         echo json_encode([
             'score' => 70,
-            'analysis' => 'The feedback appears to be generally positive with some areas for improvement.',
+            'analysis' => $responseText,
             'suggestions' => [
                 'Continue open communication channels',
                 'Address specific concerns raised',
@@ -63,6 +88,6 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     }
 }
 else {
-    echo json_encode(['error' => 'Failed to analyze sentiment']);
+    echo json_encode(['error' => 'Failed to analyze sentiment. The AI service may be temporarily unavailable.']);
 }
 ?>

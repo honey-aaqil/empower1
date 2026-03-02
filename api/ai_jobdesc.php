@@ -37,14 +37,25 @@ Format it professionally with clear sections.";
 
 $result = getGoogleAI()->generateContent($prompt);
 
+// Check for API errors
+if (isset($result['error'])) {
+    echo json_encode(['error' => 'AI API Error: ' . ($result['error']['message'] ?? 'Unknown error')]);
+    exit;
+}
+
 if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     $jobDescription = $result['candidates'][0]['content']['parts'][0]['text'];
 
     // Save to database
-    $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result) VALUES ('custom', ?, ?)");
-    $inputJson = json_encode(['role' => $role, 'requirements' => $requirements]);
-    $stmt->bind_param("ss", $inputJson, $jobDescription);
-    $stmt->execute();
+    try {
+        $stmt = $db->prepare("INSERT INTO ai_analysis (analysis_type, input_data, result) VALUES ('custom', ?, ?)");
+        $inputJson = json_encode(['role' => $role, 'requirements' => $requirements]);
+        $stmt->bind_param("ss", $inputJson, $jobDescription);
+        $stmt->execute();
+    }
+    catch (Exception $e) {
+    // DB save failed, but we still return the description
+    }
 
     echo json_encode([
         'job_description' => nl2br(htmlspecialchars($jobDescription)),
@@ -52,6 +63,6 @@ if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
     ]);
 }
 else {
-    echo json_encode(['error' => 'Failed to generate job description']);
+    echo json_encode(['error' => 'Failed to generate job description. The AI service may be temporarily unavailable.']);
 }
 ?>

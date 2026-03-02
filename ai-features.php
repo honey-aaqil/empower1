@@ -95,7 +95,8 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                         <i class="fas fa-cog"></i>
                         <span>Settings</span>
                     </a>
-                    <?php endif; ?>
+                    <?php
+endif; ?>
                     <a href="logout.php" class="nav-item">
                         <i class="fas fa-sign-out-alt"></i>
                         <span>Logout</span>
@@ -175,7 +176,8 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                                 <option value="">Choose an employee</option>
                                 <?php while ($emp = $employees->fetch_assoc()): ?>
                                 <option value="<?php echo $emp['id']; ?>"><?php echo htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name']); ?></option>
-                                <?php endwhile; ?>
+                                <?php
+endwhile; ?>
                             </select>
                         </div>
                         
@@ -229,7 +231,8 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                                 <option value="">All Departments</option>
                                 <?php while ($dept = $departments->fetch_assoc()): ?>
                                 <option value="<?php echo $dept['id']; ?>"><?php echo htmlspecialchars($dept['name']); ?></option>
-                                <?php endwhile; ?>
+                                <?php
+endwhile; ?>
                             </select>
                         </div>
                         
@@ -261,9 +264,9 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                         </thead>
                         <tbody>
                             <?php
-                            $analysisHistory = $db->query("SELECT a.*, e.first_name, e.last_name FROM ai_analysis a LEFT JOIN employees e ON a.employee_id = e.id ORDER BY a.created_at DESC LIMIT 10");
-                            while ($analysis = $analysisHistory->fetch_assoc()):
-                            ?>
+$analysisHistory = $db->query("SELECT a.*, e.first_name, e.last_name FROM ai_analysis a LEFT JOIN employees e ON a.employee_id = e.id ORDER BY a.created_at DESC LIMIT 10");
+while ($analysis = $analysisHistory->fetch_assoc()):
+?>
                             <tr>
                                 <td><?php echo date('M d, Y H:i', strtotime($analysis['created_at'])); ?></td>
                                 <td>
@@ -272,13 +275,14 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                                     </span>
                                 </td>
                                 <td>
-                                    <?php 
-                                    if ($analysis['first_name']) {
-                                        echo htmlspecialchars($analysis['first_name'] . ' ' . $analysis['last_name']);
-                                    } else {
-                                        echo 'General Analysis';
-                                    }
-                                    ?>
+                                    <?php
+    if ($analysis['first_name']) {
+        echo htmlspecialchars($analysis['first_name'] . ' ' . $analysis['last_name']);
+    }
+    else {
+        echo 'General Analysis';
+    }
+?>
                                 </td>
                                 <td>
                                     <div class="progress-bar" style="width: 100px; display: inline-block; vertical-align: middle; margin-right: 10px;">
@@ -292,7 +296,8 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                                     </button>
                                 </td>
                             </tr>
-                            <?php endwhile; ?>
+                            <?php
+endwhile; ?>
                         </tbody>
                     </table>
                 </div>
@@ -348,7 +353,7 @@ $departments = $db->query("SELECT id, name FROM departments ORDER BY name");
                     `;
                 }
             } catch (error) {
-                showToast('Error analyzing sentiment', 'error');
+                showToast('Error analyzing sentiment: ' + error.message, 'error');
             } finally {
                 this.disabled = false;
                 this.innerHTML = '<i class="fas fa-magic"></i> Analyze Sentiment';

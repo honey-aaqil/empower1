@@ -41,6 +41,18 @@
             "use": "vercel-php@0.9.0"
         },
         {
+            "src": "payroll.php",
+            "use": "vercel-php@0.9.0"
+        },
+        {
+            "src": "profile.php",
+            "use": "vercel-php@0.9.0"
+        },
+        {
+            "src": "settings.php",
+            "use": "vercel-php@0.9.0"
+        },
+        {
             "src": "analytics.php",
             "use": "vercel-php@0.9.0"
         },
