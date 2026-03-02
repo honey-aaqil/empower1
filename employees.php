@@ -159,6 +159,15 @@ $employees = $db->query("SELECT e.*, d.name as department_name FROM employees e 
                 </div>
             <?php endif; ?>
 
+            <?php if ($filterDepartment > 0 && !empty($filterDeptName)): ?>
+                <div class="toast info" style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <span><i class="fas fa-filter"></i> Showing employees from <strong><?php echo htmlspecialchars($filterDeptName); ?></strong> department</span>
+                    <a href="employees.php" class="btn btn-secondary" style="padding: 5px 15px; font-size: 0.85rem;">
+                        <i class="fas fa-times"></i> Clear Filter
+                    </a>
+                </div>
+            <?php endif; ?>
+
             <!-- Employees Table -->
             <div class="content-card">
                 <div class="card-body" style="padding: 0;">
