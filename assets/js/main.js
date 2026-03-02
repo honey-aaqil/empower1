@@ -152,12 +152,6 @@ function initCharts() {
     if (departmentChart) {
         renderDepartmentChart(departmentChart);
     }
-
-    // Performance Chart
-    const performanceChart = document.getElementById('performanceChart');
-    if (performanceChart) {
-        renderPerformanceChart(performanceChart);
-    }
 }
 
 function renderAttendanceChart(container) {
@@ -253,57 +247,6 @@ function renderDepartmentChart(container) {
     });
 }
 
-function renderPerformanceChart(container) {
-    const ctx = container.getContext('2d');
-    const chartData = window.dashboardData?.performance || { labels: [], data: [] };
-
-    new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: 'Average Performance (%)',
-                data: chartData.data,
-                borderColor: '#0ea5e9',
-                backgroundColor: 'rgba(14, 165, 233, 0.1)',
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#0ea5e9',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
-                pointRadius: 6
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    display: false
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: false,
-                    min: 60,
-                    max: 100,
-                    grid: {
-                        color: 'rgba(14, 165, 233, 0.1)'
-                    }
-                },
-                x: {
-                    grid: {
-                        display: false
-                    }
-                }
-            },
-            animation: {
-                duration: 2000,
-                easing: 'easeOutQuart'
-            }
-        }
-    });
-}
 
 // Search Functionality
 function initSearch() {

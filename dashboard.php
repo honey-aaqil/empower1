@@ -37,22 +37,6 @@ while ($row = $deptDistribution->fetch_assoc()) {
     $deptLabels[] = $row['name'];
     $deptData[] = $row['count'];
 }
-
-// Prepare performance trends
-$perfQuery = $db->query("
-    SELECT DATE_FORMAT(review_period_start, '%b') as month,
-    AVG(overall_rating) * 20 as avg_score 
-    FROM performance_reviews
-    WHERE review_period_start >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-    GROUP BY DATE_FORMAT(review_period_start, '%b'), MONTH(review_period_start)
-    ORDER BY MIN(review_period_start) ASC LIMIT 6
-");
-$perfLabels = [];
-$perfData = [];
-while ($row = $perfQuery->fetch_assoc()) {
-    $perfLabels[] = $row['month'];
-    $perfData[] = round($row['avg_score']);
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -253,9 +237,6 @@ endif; ?>
                 <div class="content-card">
                     <div class="card-header">
                         <h3 class="card-title">Attendance Overview</h3>
-                        <button class="action-btn view">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
                     </div>
                     <div class="card-body">
                         <div class="chart-3d-container">
@@ -267,9 +248,6 @@ endif; ?>
                 <div class="content-card">
                     <div class="card-header">
                         <h3 class="card-title">Department Distribution</h3>
-                        <button class="action-btn view">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
                     </div>
                     <div class="card-body">
                         <div class="chart-3d-container">
@@ -323,20 +301,6 @@ endif; ?>
 endwhile; ?>
                             </tbody>
                         </table>
-                    </div>
-                </div>
-
-                <div class="content-card">
-                    <div class="card-header">
-                        <h3 class="card-title">Performance Trends</h3>
-                        <button class="action-btn view">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                    </div>
-                    <div class="card-body">
-                        <div class="chart-3d-container">
-                            <canvas id="performanceChart"></canvas>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -415,10 +379,6 @@ endwhile; ?>
         departments: {
             labels: <?php echo json_encode($deptLabels ?: ['IT', 'HR', 'Finance']); ?>,
             data: <?php echo json_encode($deptData ?: [1, 1, 1]); ?>
-        },
-        performance: {
-            labels: <?php echo json_encode($perfLabels ?: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun']); ?>,
-            data: <?php echo json_encode($perfData ?: [0, 0, 0, 0, 0, 0]); ?>
         }
     };
     </script>
