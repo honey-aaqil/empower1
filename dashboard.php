@@ -44,7 +44,8 @@ $perfQuery = $db->query("
     AVG(overall_rating) * 20 as avg_score 
     FROM performance_reviews
     WHERE review_period_start >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-    GROUP BY MONTH(review_period_start), month ORDER BY review_period_start ASC LIMIT 6
+    GROUP BY DATE_FORMAT(review_period_start, '%b'), MONTH(review_period_start)
+    ORDER BY MIN(review_period_start) ASC LIMIT 6
 ");
 $perfLabels = [];
 $perfData = [];
