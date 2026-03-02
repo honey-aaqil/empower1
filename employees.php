@@ -17,8 +17,23 @@ if (isset($_GET['delete']) && isAdmin()) {
     redirect('employees.php?msg=deleted');
 }
 
-// Get all employees with department info
-$employees = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id ORDER BY e.created_at DESC");
+// Department filtering
+$filterDepartment = isset($_GET['department']) ? intval($_GET['department']) : 0;
+$filterDeptName = '';
+$whereClause = "";
+
+if ($filterDepartment > 0) {
+    $deptQuery = $db->query("SELECT name FROM departments WHERE id = $filterDepartment");
+    if ($deptQuery && $deptQuery->num_rows > 0) {
+        $filterDeptName = $deptQuery->fetch_assoc()['name'];
+        $whereClause = " WHERE e.department_id = $filterDepartment";
+    } else {
+        $filterDepartment = 0;
+    }
+}
+
+// Get all employees with department info (filtered if department is selected)
+$employees = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id" . $whereClause . " ORDER BY e.created_at DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
