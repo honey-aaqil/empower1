@@ -289,7 +289,7 @@ $employees = $db->query("SELECT e.*, d.name as department_name FROM employees e 
                             </div>
                         </div>
                     </div>
-                    <?php endfor; ?>
+                    <?php endwhile; ?>
                 </div>
             </div>
         </main>
