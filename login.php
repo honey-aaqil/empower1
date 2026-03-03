@@ -11,35 +11,38 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = sanitize($_POST['username']);
     $password = $_POST['password'];
-    
+
     if (empty($username) || empty($password)) {
         $error = 'Please enter both username and password';
-    } else {
+    }
+    else {
         $stmt = $db->prepare("SELECT id, username, email, password, role FROM users WHERE username = ? AND is_active = 1");
         $stmt->bind_param("s", $username);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result->num_rows === 1) {
             $user = $result->fetch_assoc();
-            
+
             if (password_verify($password, $user['password'])) {
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['role'] = $user['role'];
-                
+
                 // Update last login
                 $db->query("UPDATE users SET last_login = NOW() WHERE id = " . $user['id']);
-                
+
                 // Log activity
                 $db->query("INSERT INTO activity_logs (user_id, action, details, ip_address) VALUES ({$user['id']}, 'login', 'User logged in', '{$_SERVER['REMOTE_ADDR']}')");
-                
+
                 redirect('dashboard.php');
-            } else {
+            }
+            else {
                 $error = 'Invalid password';
             }
-        } else {
+        }
+        else {
             $error = 'User not found';
         }
     }
@@ -78,7 +81,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fas fa-times-circle"></i>
                     <span><?php echo $error; ?></span>
                 </div>
-            <?php endif; ?>
+            <?php
+endif; ?>
             
             <form method="POST" action="">
                 <div class="form-group">
@@ -112,11 +116,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </p>
             </div>
             
-            <div style="text-align: center; margin-top: 15px;">
-                <p style="color: var(--text-muted); font-size: 0.8rem;">
-                    Default: admin / admin123
-                </p>
-            </div>
         </div>
     </div>
 

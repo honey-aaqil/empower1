@@ -1,6 +1,6 @@
-# Employee Management System with AI Features
+# Employee Management System
 
-A comprehensive, full-fledged Employee Management System built with PHP and integrated with Google AI Studio API for intelligent workforce analytics.
+A comprehensive, full-fledged Employee Management System built with PHP and optimized for serverless deployment on **Vercel**. 
 
 ## Features
 
@@ -12,12 +12,6 @@ A comprehensive, full-fledged Employee Management System built with PHP and inte
 - **Payroll Management**: Salary tracking and management
 - **User Authentication**: Secure login system with role-based access
 
-### AI-Powered Features (Google AI Studio Integration)
-- **Sentiment Analysis**: Analyze employee feedback and satisfaction
-- **Performance Prediction**: Predict employee performance trends
-- **Job Description Generator**: AI-generated professional job descriptions
-- **Team Dynamics Analysis**: Analyze team collaboration and composition
-
 ### Design Features
 - **Sky Blue Theme**: Modern, professional color scheme
 - **3D Motion Elements**: Interactive 3D animations and effects
@@ -26,52 +20,40 @@ A comprehensive, full-fledged Employee Management System built with PHP and inte
 
 ## Technology Stack
 
-- **Backend**: PHP 8.0+
-- **Database**: MySQL/MariaDB
+- **Backend**: PHP 8.2 (via `vercel-php`)
+- **Database**: MySQL/MariaDB (Remote database required for Vercel, e.g., Railway, PlanetScale, Aiven, etc.)
 - **Frontend**: HTML5, CSS3, JavaScript
 - **Charts**: Chart.js
-- **AI API**: Google AI Studio (Gemini Pro)
 - **Icons**: Font Awesome
+- **Hosting**: Vercel
 
-## Installation
+## Deployment on Vercel
 
-### Prerequisites
-- PHP 8.0 or higher
-- MySQL 5.7 or higher
-- Web server (Apache/Nginx)
+This application is configured to run flawlessly on Vercel's serverless infrastructure using the `vercel-php` community runtime.
+
+### Prerequisites for Vercel Deployment
+1. A Vercel account
+2. A remote MySQL database that allows external connections
 
 ### Setup Steps
 
-1. **Clone/Extract the project** to your web server directory
+1. **Database Setup**:
+   Import the database schema located in `includes/database.sql` into your remote MySQL database.
 
-2. **Create the database**:
-   ```sql
-   -- Import the database schema
-   mysql -u root -p < includes/database.sql
-   ```
+2. **Deploy to Vercel**:
+   You can deploy this project to Vercel directly via GitHub or Vercel CLI.
 
-3. **Configure database connection**:
-   Edit `includes/config.php` and update the database credentials:
-   ```php
-   define('DB_HOST', 'localhost');
-   define('DB_USER', 'your_username');
-   define('DB_PASS', 'your_password');
-   define('DB_NAME', 'employee_management');
-   ```
+3. **Configure Environment Variables**:
+   In your Vercel project settings, go to the **Environment Variables** section and add the following keys with your remote database credentials:
+   - `DB_HOST` (e.g., `db.your-provider.com`)
+   - `DB_USER` (e.g., `admin`)
+   - `DB_PASS` (e.g., `your_strong_password`)
+   - `DB_NAME` (e.g., `employee_management`)
 
-4. **Google AI Studio API Key**:
-   The API key is already configured in `includes/config.php`:
-   ```php
-   define('GOOGLE_AI_API_KEY', 'AIzaSyCOUEXmc-k82Pgv48VBATeotWj7Mg_RFdo');
-   ```
+4. **Access the application**:
+   Once deployed, Vercel will provide you with a live URL (e.g., `https://your-app-name.vercel.app`).
 
-5. **Access the application**:
-   Open your browser and navigate to:
-   ```
-   http://localhost/employee-management-system/
-   ```
-
-6. **Default Login Credentials**:
+5. **Default Login Credentials**:
    - Username: `admin`
    - Password: `admin123`
 
@@ -80,13 +62,6 @@ A comprehensive, full-fledged Employee Management System built with PHP and inte
 ```
 employee-management-system/
 ├── api/                    # API endpoints
-│   ├── add_employee.php
-│   ├── ai_sentiment.php
-│   ├── ai_predict.php
-│   ├── ai_jobdesc.php
-│   ├── ai_team.php
-│   ├── get_employee.php
-│   └── export_employees.php
 ├── assets/
 │   ├── css/
 │   │   └── style.css      # Main stylesheet with sky blue theme
@@ -94,10 +69,10 @@ employee-management-system/
 │   │   └── main.js        # JavaScript with 3D animations
 │   └── images/
 ├── includes/
-│   ├── config.php         # Database & API configuration
+│   ├── config.php         # Database configuration (reads ENV vars)
 │   └── database.sql       # Database schema
-├── pages/                 # Additional pages
-├── index.php             # Redirects to login
+├── vercel.json           # Vercel deployment configuration
+├── index.php             # Redirects to login/dashboard
 ├── login.php             # Login page
 ├── register.php          # Registration page
 ├── dashboard.php         # Main dashboard
@@ -106,37 +81,10 @@ employee-management-system/
 ├── attendance.php        # Attendance tracking
 ├── leave.php             # Leave management
 ├── payroll.php           # Payroll management
-├── ai-features.php       # AI-powered features
 ├── analytics.php         # Analytics & reports
 ├── profile.php           # User profile
 └── logout.php            # Logout handler
 ```
-
-## AI Features Usage
-
-### 1. Sentiment Analysis
-- Navigate to **AI Features > Sentiment Analysis**
-- Enter employee feedback text
-- Click "Analyze Sentiment"
-- View positivity score and suggestions
-
-### 2. Performance Prediction
-- Navigate to **AI Features > Performance Prediction**
-- Select an employee from the dropdown
-- Click "Predict Performance"
-- View prediction score, trends, and recommendations
-
-### 3. Job Description Generator
-- Navigate to **AI Features > Job Description Generator**
-- Enter job role and requirements
-- Click "Generate Description"
-- Copy the AI-generated job description
-
-### 4. Team Dynamics Analysis
-- Navigate to **AI Features > Team Dynamics**
-- Select a department (optional)
-- Click "Analyze Team"
-- View collaboration metrics and recommendations
 
 ## User Roles
 
@@ -150,9 +98,8 @@ employee-management-system/
 - Password hashing with bcrypt
 - SQL injection prevention with prepared statements
 - XSS protection with output sanitization
-- Session management
+- Secure session management adapted for serverless environments
 - Role-based access control
-- Activity logging
 
 ## Customization
 
@@ -167,36 +114,17 @@ Edit `assets/css/style.css` and modify the CSS variables:
 }
 ```
 
-### Adding New AI Features
-1. Create a new API file in `api/` directory
-2. Use the GoogleAI class from `config.php`
-3. Call the `generateContent()` method with your prompt
-4. Create a UI component in `ai-features.php`
-
 ## Troubleshooting
 
-### Database Connection Issues
-- Verify database credentials in `includes/config.php`
-- Ensure MySQL service is running
-- Check database exists: `SHOW DATABASES;`
-
-### AI API Issues
-- Verify API key is valid
-- Check internet connectivity
-- Review error logs in browser console
-
-### Permission Issues
-- Ensure `uploads/` directory is writable
-- Set correct permissions: `chmod 755 uploads/`
+### Database Connection Issues on Vercel
+- Ensure your database provider allows external connections (some providers require you to whitelist Vercel's IP addresses, or allow `0.0.0.0/0`).
+- Double-check that all `DB_*` environment variables are correctly set in the Vercel dashboard.
+- Remember that environment variables in Vercel need a redeployment to take effect if added after the initial deployment.
 
 ## License
 
 This project is open-source and available for personal and commercial use.
 
-## Support
-
-For issues or questions, please contact the development team.
-
 ---
 
-**Built with ❤️ using PHP, MySQL, and Google AI Studio**
+**Built with ❤️ for Serverless PHP**
