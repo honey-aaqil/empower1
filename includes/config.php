@@ -27,7 +27,7 @@ class DatabaseSessionHandler implements SessionHandlerInterface
         return true;
     }
 
-    public function read($id): string|bool
+    public function read($id): string|false
     {
         $stmt = $this->conn->prepare("SELECT data FROM sessions WHERE id = ? AND expires_at > NOW()");
         $stmt->bind_param("s", $id);
@@ -54,7 +54,7 @@ class DatabaseSessionHandler implements SessionHandlerInterface
         return $stmt->execute();
     }
 
-    public function gc($maxlifetime): int|bool
+    public function gc($maxlifetime): int|false
     {
         $stmt = $this->conn->prepare("DELETE FROM sessions WHERE expires_at < NOW()");
         $stmt->execute();
