@@ -16,7 +16,8 @@ if ($lastEmployee && $lastEmployee->num_rows > 0) {
     $lastCode = $lastEmployee->fetch_assoc()['employee_code'];
     $lastNum = intval(substr($lastCode, -3));
     $newNum = $lastNum + 1;
-} else {
+}
+else {
     $newNum = 1;
 }
 
@@ -57,23 +58,38 @@ $stmt->bind_param("sssssisssds", $employeeCode, $firstName, $lastName, $email, $
 
 if ($stmt->execute()) {
     $employeeId = $db->lastInsertId();
-    
+
     // Log activity
     $db->query("INSERT INTO activity_logs (user_id, action, details, ip_address) VALUES ({$_SESSION['user_id']}, 'add_employee', 'Added employee: $employeeCode', '{$_SERVER['REMOTE_ADDR']}')");
-    
+
     // Create user account for employee
-    $username = strtolower($firstName . '.' . $lastName);
+    $baseUsername = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $firstName) . '.' . preg_replace('/[^a-zA-Z0-9]/', '', $lastName));
+    $username = $baseUsername;
+    $counter = 1;
+
+    while (true) {
+        $checkUser = $db->query("SELECT id FROM users WHERE username = '" . $db->escape_string($username) . "'");
+        if ($checkUser && $checkUser->num_rows > 0) {
+            $username = $baseUsername . $counter;
+            $counter++;
+        }
+        else {
+            break;
+        }
+    }
+
     $password = password_hash('employee123', PASSWORD_DEFAULT);
-    
+
     $userStmt = $db->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'employee')");
     $userStmt->bind_param("sss", $username, $email, $password);
     $userStmt->execute();
-    
+
     $userId = $db->lastInsertId();
     $db->query("UPDATE employees SET user_id = $userId WHERE id = $employeeId");
-    
+
     $_SESSION['success'] = 'Employee added successfully';
-} else {
+}
+else {
     $_SESSION['error'] = 'Error adding employee: ' . $stmt->error;
 }
 
