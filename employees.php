@@ -251,7 +251,7 @@ $employees = $db->query("SELECT e.*, d.name as department_name FROM employees e 
                 <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px;">
                     <?php
                     $employees->data_seek(0);
-                    for ($count = 0; $count < 6 && ($employee = $employees->fetch_assoc()) !== null; $count++):
+                    while (($employee = $employees->fetch_assoc()) !== null):
                     ?>
                     <div class="employee-card-3d">
                         <div style="text-align: center; margin-bottom: 20px;">
