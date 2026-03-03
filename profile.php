@@ -95,7 +95,7 @@ $employeeData = $empResult->num_rows > 0 ? $empResult->fetch_assoc() : null;
             <div class="sidebar-header">
                 <div class="sidebar-logo">
                     <div class="sidebar-logo-icon"><i class="fas fa-users-cog"></i></div>
-                    <span class="sidebar-logo-text">EMS</span>
+                    <span class="sidebar-logo-text">Empower</span>
                 </div>
             </div>
             

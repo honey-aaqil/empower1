@@ -73,7 +73,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                     <div class="sidebar-logo-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
-                    <span class="sidebar-logo-text">EMS</span>
+                    <span class="sidebar-logo-text">Empower</span>
                 </div>
             </div>
             

@@ -69,7 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-container">
         <div class="login-card" style="max-width: 500px;">
             <div class="login-logo">
-                <h1><i class="fas fa-users-cog"></i> EMS</h1>
+                <h1><i class="fas fa-users-cog"></i> Empower</h1>
                 <p>Create Your Account</p>
             </div>
             

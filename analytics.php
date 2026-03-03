@@ -45,7 +45,7 @@ $departmentStats = $db->query("SELECT d.name, COUNT(e.id) as count, AVG(e.salary
                     <div class="sidebar-logo-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
-                    <span class="sidebar-logo-text">EMS</span>
+                    <span class="sidebar-logo-text">Empower</span>
                 </div>
             </div>
             

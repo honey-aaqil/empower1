@@ -72,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="login-container">
         <div class="login-card">
             <div class="login-logo">
-                <h1><i class="fas fa-users-cog"></i> EMS</h1>
+                <h1><i class="fas fa-users-cog"></i> Empower</h1>
                 <p>Employee Management System</p>
             </div>
             

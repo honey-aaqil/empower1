@@ -68,7 +68,7 @@ while ($row = $deptDistribution->fetch_assoc()) {
                     <div class="sidebar-logo-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
-                    <span class="sidebar-logo-text">EMS</span>
+                    <span class="sidebar-logo-text">Empower</span>
                 </div>
             </div>
             

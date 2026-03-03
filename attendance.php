@@ -89,7 +89,7 @@ $attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(C
                     <div class="sidebar-logo-icon">
                         <i class="fas fa-users-cog"></i>
                     </div>
-                    <span class="sidebar-logo-text">EMS</span>
+                    <span class="sidebar-logo-text">Empower</span>
                 </div>
             </div>
             
