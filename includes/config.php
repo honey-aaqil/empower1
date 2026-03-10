@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Asia/Kolkata');
 // Database Configuration (TiDB Cloud)
 define('DB_HOST', getenv('DB_HOST') ?: 'gateway01.ap-southeast-1.prod.aws.tidbcloud.com');
 define('DB_PORT', getenv('DB_PORT') ?: 4000);
