@@ -5,11 +5,21 @@ requireAdmin();
 $msg = '';
 $msgType = '';
 
+$db->query("CREATE TABLE IF NOT EXISTS settings (setting_key VARCHAR(50) PRIMARY KEY, setting_value TEXT)");
+
 // Handle Settings Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_settings') {
-    // In a real app we'd save these to a settings table. For now, just simulating.
+    $selfService = isset($_POST['employee_self_service']) ? '1' : '0';
+    $db->query("REPLACE INTO settings (setting_key, setting_value) VALUES ('employee_self_service', '$selfService')");
     $msg = "System settings updated successfully.";
     $msgType = "success";
+}
+
+// Get feature toggle status
+$selfServiceOn = true;
+$res = $db->query("SELECT setting_value FROM settings WHERE setting_key = 'employee_self_service'");
+if ($res && $res->num_rows > 0) {
+    $selfServiceOn = ($res->fetch_assoc()['setting_value'] === '1');
 }
 
 // Get system stats for admin
@@ -188,7 +198,7 @@ endif; ?>
                                     input:checked + .slider:before { transform: translateX(24px); }
                                 </style>
                                 <label class="switch">
-                                    <input type="checkbox" name="employee_self_service" value="1" checked>
+                                    <input type="checkbox" name="employee_self_service" value="1" <?php echo $selfServiceOn ? 'checked' : ''; ?>>
                                     <span class="slider"></span>
                                 </label>
                             </div>

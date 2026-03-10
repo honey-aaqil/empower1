@@ -6,23 +6,36 @@ $userId = $_SESSION['user_id'];
 $msg = '';
 $msgType = '';
 
+// Check self-service setting
+$selfServiceOn = true;
+$res = @$db->query("SELECT setting_value FROM settings WHERE setting_key = 'employee_self_service'");
+if ($res && $res->num_rows > 0) {
+    $selfServiceOn = ($res->fetch_assoc()['setting_value'] === '1');
+}
+
 // Handle Profile Update
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     if ($_POST['action'] === 'update_profile') {
-        $username = $db->escape($_POST['username']);
-        $email = $db->escape($_POST['email']);
-
-        $stmt = $db->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
-        $stmt->bind_param("ssi", $username, $email, $userId);
-
-        if ($stmt->execute()) {
-            $_SESSION['username'] = $username;
-            $msg = "Profile updated successfully.";
-            $msgType = "success";
+        if (isEmployee() && !$selfServiceOn) {
+            $msg = "Profile updates are currently disabled by the administrator.";
+            $msgType = "danger";
         }
         else {
-            $msg = "Error updating profile. Username or email might already exist.";
-            $msgType = "danger";
+            $username = $db->escape($_POST['username']);
+            $email = $db->escape($_POST['email']);
+
+            $stmt = $db->prepare("UPDATE users SET username = ?, email = ? WHERE id = ?");
+            $stmt->bind_param("ssi", $username, $email, $userId);
+
+            if ($stmt->execute()) {
+                $_SESSION['username'] = $username;
+                $msg = "Profile updated successfully.";
+                $msgType = "success";
+            }
+            else {
+                $msg = "Error updating profile. Username or email might already exist.";
+                $msgType = "danger";
+            }
         }
     }
     elseif ($_POST['action'] === 'change_password') {
@@ -206,6 +219,12 @@ endif; ?>
                             <h3 class="card-title"><i class="fas fa-user-edit" style="color: var(--primary-color);"></i> Account Settings</h3>
                         </div>
                         <div class="card-body">
+                            <?php if (isEmployee() && !$selfServiceOn): ?>
+                                <div class="toast danger" style="padding: 15px; margin-bottom: 0; background: rgba(239, 68, 68, 0.1); color: var(--danger-color); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: var(--border-radius);">
+                                    <i class="fas fa-lock" style="margin-right: 10px;"></i> Profile updates have been disabled by your administrator.
+                                </div>
+                            <?php
+else: ?>
                             <form method="POST" action="">
                                 <input type="hidden" name="action" value="update_profile">
                                 
@@ -222,6 +241,8 @@ endif; ?>
                                     <i class="fas fa-save"></i> Save Changes
                                 </button>
                             </form>
+                            <?php
+endif; ?>
                         </div>
                     </div>
 
