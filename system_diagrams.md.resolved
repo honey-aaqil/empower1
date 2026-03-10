@@ -1,0 +1,190 @@
+# Empower - System Diagrams
+
+This document contains the System Workflow and Data Flow Diagrams (DFD) for the Empower (Employee Management System) application. 
+
+These diagrams can be used directly in documentation, presentations, or render natively in Markdown viewers that support Mermaid.js (like GitHub, GitLab, or Notion).
+
+---
+
+## 1. System Block Diagram & Workflow
+
+This diagram illustrates the high-level architecture and the flow of user interactions through the serverless PHP functions to the database.
+
+```mermaid
+flowchart TD
+    %% Entities
+    User((User:\nAdmin/HR/Employee))
+    
+    %% Frontend Layer
+    subgraph Frontend [Frontend (Client Browser)]
+        UI[Web UI (HTML/CSS/JS)]
+        Charts[Chart.js Visualizations]
+    end
+
+    %% Application Layer (Vercel)
+    subgraph Application [Application Engine (Serverless PHP on Vercel)]
+        Auth[Authentication & Session\nconfig.php, login.php]
+        
+        subgraph Modules [Application Modules]
+            Dashboard[Dashboard View]
+            EmpMod[Employee Management\nemployees.php]
+            DeptMod[Department Management\ndepartments.php]
+            AttMod[Attendance Tracking\nattendance.php]
+            LeaveMod[Leave Management\nleave.php]
+            PayMod[Payroll Processing\npayroll.php]
+            Analytics[Analytics & Reports\nanalytics.php, export_analytics.php]
+        end
+        
+        API[API Endpoints\napi/add_employee.php, etc.]
+    end
+
+    %% Database Layer
+    subgraph Database [Database Layer (TiDB Cloud / MySQL)]
+        DB[(Relational DB)]
+        Sessions[(Session Store)]
+    end
+
+    %% Connections
+    User <-->|HTTP/HTTPS\nRequests & Responses| UI
+    UI <--> Charts
+    UI -->|Interacts with| Auth
+    UI -->|AJAX/Form Submit| API
+    UI -->|Navigates| Modules
+    
+    Auth <-->|Validate/Store| Sessions
+    Modules <-->|Read/Write| DB
+    API <-->|Execute Queries| DB
+    API -->|Return JSON/Redirect| UI
+```
+
+---
+
+## 2. Context Diagram (DFD Level 0)
+
+The Context Diagram shows the entire system as a single process, highlighting its interactions with external entities (the users).
+
+```mermaid
+flowchart LR
+    %% External Entities
+    Admin[Admin / HR Manager]
+    Emp[Employee]
+
+    %% Main System Process
+    System((Empower\nEmployee\nManagement\nSystem))
+
+    %% Data Flows
+    Admin -->|Login Credentials, Employee Data,\nDepartment Details, Payroll Config| System
+    System -->|System Dashboard, Reports,\nEmployee Overview, Exported CSVs| Admin
+
+    Emp -->|Login Credentials, Leave Requests,\nProfile Updates| System
+    System -->|Personal Dashboard, Leave Status,\nProfile Info| Emp
+```
+
+---
+
+## 3. Data Flow Diagram (DFD Level 1)
+
+The Level 1 DFD breaks down the main system into its primary sub-processes and shows how data moves between them and the data stores.
+
+```mermaid
+flowchart TD
+    %% External Entities
+    Admin[Admin / HR]
+    Employee[Employee]
+
+    %% Processes (Circles)
+    P1((1.0\nAuthentication\n& Authorization))
+    P2((2.0\nManage\nEmployees\n& Departments))
+    P3((3.0\nProcess\nAttendance\n& Time))
+    P4((4.0\nManage\nLeaves))
+    P5((5.0\nGenerate\nAnalytics\n& Reports))
+
+    %% Data Stores (Open Rectangles in conventional DFD, using cylinders here for clarity)
+    D1[(D1: Users & Sessions)]
+    D2[(D2: Employees\n& Departments)]
+    D3[(D3: Attendance Records)]
+    D4[(D4: Leave Requests)]
+    D5[(D5: Activity Logs)]
+
+    %% Flow - Auth
+    Admin -->|Login| P1
+    Employee -->|Login| P1
+    P1 <-->|Verify Credentials,\nCreate Session| D1
+    P1 -->|Auth Token/Context| P2
+    P1 -->|Auth Token/Context| P3
+    P1 -->|Auth Token/Context| P4
+
+    %% Flow - Employee Management
+    Admin -->|Add/Update/Delete| P2
+    P2 <-->|Store/Retrieve\nDetails| D2
+    P2 -->|Log Action| D5
+
+    %% Flow - Attendance
+    P3 <-->|Read/Write\nRecords| D3
+    P2 -->|Employee Context| P3
+
+    %% Flow - Leaves
+    Employee -->|Submit Request| P4
+    Admin -->|Approve/Reject| P4
+    P4 <-->|Store/Retrieve| D4
+    P4 -->|Log Action| D5
+
+    %% Flow - Analytics
+    Admin -->|Request Report| P5
+    D2 -.->|Employee Data| P5
+    D3 -.->|Attendance Data| P5
+    D4 -.->|Leave Data| P5
+    P5 -->|CSV Export / Dashboard Charts| Admin
+```
+
+---
+
+## 4. Entity-Relationship (ER) Overview
+
+A simplified view of the core database tables and their relationships.
+
+```mermaid
+erDiagram
+    USERS ||--|| EMPLOYEES : "1 to 1 (Authentication)"
+    DEPARTMENTS ||--o{ EMPLOYEES : "has many"
+    EMPLOYEES ||--o{ ATTENDANCE : "logs"
+    EMPLOYEES ||--o{ LEAVE_REQUESTS : "submits"
+    USERS ||--o{ ACTIVITY_LOGS : "generates"
+
+    USERS {
+        int id PK
+        string username
+        string email
+        string password
+        string role
+    }
+
+    EMPLOYEES {
+        int id PK
+        string employee_code
+        int user_id FK
+        int department_id FK
+        string first_name
+        string status
+    }
+
+    DEPARTMENTS {
+        int id PK
+        string name
+    }
+
+    ATTENDANCE {
+        int id PK
+        int employee_id FK
+        date date
+        string status
+    }
+
+    LEAVE_REQUESTS {
+        int id PK
+        int employee_id FK
+        string status
+        date start_date
+        date end_date
+    }
+```

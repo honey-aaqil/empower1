@@ -11,7 +11,6 @@ define('DB_NAME', getenv('DB_NAME') ?: 'test');
 class DatabaseSessionHandler implements SessionHandlerInterface
 {
     private $conn;
-
     public function __construct($connection)
     {
         $this->conn = $connection;
