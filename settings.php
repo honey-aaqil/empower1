@@ -179,11 +179,17 @@ endif; ?>
                                     <div style="font-weight: 600;">Employee Self-Service</div>
                                     <div style="font-size: 0.85rem; color: var(--text-muted);">Allow employees to update their own profiles.</div>
                                 </div>
-                                <label class="switch" style="position: relative; display: inline-block; width: 50px; height: 24px;">
-                                    <input type="checkbox" style="opacity: 0; width: 0; height: 0;">
-                                    <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); border-radius: 24px;">
-                                        <span style="position: absolute; content: ''; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s;"></span>
-                                    </span>
+                                <style>
+                                    .switch { position: relative; display: inline-block; width: 50px; height: 24px; }
+                                    .switch input { opacity: 0; width: 0; height: 0; }
+                                    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--border-color); border-radius: 24px; transition: .4s; }
+                                    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 3px; background-color: white; border-radius: 50%; transition: .4s; }
+                                    input:checked + .slider { background-color: var(--primary-color); }
+                                    input:checked + .slider:before { transform: translateX(24px); }
+                                </style>
+                                <label class="switch">
+                                    <input type="checkbox" name="employee_self_service" value="1" checked>
+                                    <span class="slider"></span>
                                 </label>
                             </div>
                             
