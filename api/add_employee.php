@@ -68,7 +68,7 @@ if ($stmt->execute()) {
     $counter = 1;
 
     while (true) {
-        $checkUser = $db->query("SELECT id FROM users WHERE username = '" . $db->escape_string($username) . "'");
+        $checkUser = $db->query("SELECT id FROM users WHERE username = '" . $db->escape($username) . "'");
         if ($checkUser && $checkUser->num_rows > 0) {
             $username = $baseUsername . $counter;
             $counter++;

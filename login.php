@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Please enter both username and password';
     }
     else {
-        $stmt = $db->prepare("SELECT id, username, email, password, role FROM users WHERE username = ? AND is_active = 1");
-        $stmt->bind_param("s", $username);
+        $stmt = $db->prepare("SELECT id, username, email, password, role FROM users WHERE (username = ? OR email = ?) AND is_active = 1");
+        $stmt->bind_param("ss", $username, $username);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -87,7 +87,7 @@ endif; ?>
             <form method="POST" action="">
                 <div class="form-group">
                     <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-input" placeholder="Enter your username" required>
+                    <input type="text" name="username" class="form-input" placeholder="Enter your username or email" required>
                 </div>
                 
                 <div class="form-group">
