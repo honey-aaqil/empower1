@@ -84,6 +84,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                         <i class="fas fa-home"></i>
                         <span>Dashboard</span>
                     </a>
+                    <?php if (!isEmployee()): ?>
                     <a href="employees.php" class="nav-item">
                         <i class="fas fa-users"></i>
                         <span>Employees</span>
@@ -92,6 +93,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                         <i class="fas fa-building"></i>
                         <span>Departments</span>
                     </a>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="nav-section">
@@ -104,6 +106,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                         <i class="fas fa-calendar-alt"></i>
                         <span>Leave Requests</span>
                     </a>
+                    <?php if (!isEmployee()): ?>
                     <a href="payroll.php" class="nav-item">
                         <i class="fas fa-money-bill-wave"></i>
                         <span>Payroll</span>
@@ -112,6 +115,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                         <i class="fas fa-chart-line"></i>
                         <span>Analytics</span>
                     </a>
+                    <?php endif; ?>
                 </div>
                 
                 <div class="nav-section">
