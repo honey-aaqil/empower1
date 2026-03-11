@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     else {
         $updateStmt = $db->prepare("UPDATE employees SET first_name=?, last_name=?, email=?, phone=?, department_id=?, designation=?, joining_date=?, employment_type=?, salary=?, address=?, status=? WHERE id=?");
-        $updateStmt->bind_param("ssssississsi", $firstName, $lastName, $email, $phone, $departmentId, $designation, $joiningDate, $employmentType, $salary, $address, $status, $id);
+        $updateStmt->bind_param("ssssisssdssi", $firstName, $lastName, $email, $phone, $departmentId, $designation, $joiningDate, $employmentType, $salary, $address, $status, $id);
 
         if ($updateStmt->execute()) {
             // Log activity
