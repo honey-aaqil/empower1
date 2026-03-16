@@ -27,6 +27,20 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $selectedDate)) {
 }
 $isToday = ($selectedDate === date('Y-m-d'));
 
+// Manager Data Isolation
+$empFilter = "";
+$attendanceJoin = "";
+$attendanceWhereStr = "WHERE (a.date <= CURDATE() AND a.date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY))";
+$monthWhereStr = "WHERE MONTH(a.date) = MONTH(CURDATE()) AND YEAR(a.date) = YEAR(CURDATE())";
+
+if (isManager() && isset($_SESSION['department_id'])) {
+    $deptId = (int)$_SESSION['department_id'];
+    $empFilter = " AND e.department_id = $deptId";
+    $attendanceJoin = " JOIN employees e ON a.employee_id = e.id ";
+    $attendanceWhereStr .= " AND e.department_id = $deptId";
+    $monthWhereStr .= " AND e.department_id = $deptId";
+}
+
 // Get attendance records for the selected date
 $attendance = $db->query("
     SELECT 
@@ -34,7 +48,7 @@ $attendance = $db->query("
         e.first_name, e.last_name, e.employee_code 
     FROM attendance a 
     JOIN employees e ON a.employee_id = e.id 
-    WHERE a.date = '$selectedDate'
+    WHERE a.date = '$selectedDate' $empFilter
     
     UNION
     
@@ -47,18 +61,23 @@ $attendance = $db->query("
       AND '$selectedDate' BETWEEN l.start_date AND l.end_date 
       AND l.employee_id NOT IN (
           SELECT employee_id FROM attendance WHERE date = '$selectedDate'
-      )
+      ) $empFilter
     ORDER BY check_in DESC, first_name ASC
 ");
 
-// Get employee list for check-in
-$employees = $db->query("SELECT id, first_name, last_name, employee_code FROM employees WHERE status = 'active' ORDER BY first_name");
+// Get employee list for check-in and check if they are on leave today
+$employees = $db->query("
+    SELECT e.id, e.first_name, e.last_name, e.employee_code, 
+           (SELECT COUNT(*) FROM leave_requests l WHERE l.employee_id = e.id AND l.status = 'approved' AND '$selectedDate' BETWEEN l.start_date AND l.end_date) as is_on_leave
+    FROM employees e 
+    WHERE e.status = 'active' $empFilter ORDER BY e.first_name
+");
 
 // Get monthly statistics
-$monthStats = $db->query("SELECT status, COUNT(*) as count FROM attendance WHERE MONTH(date) = MONTH(CURDATE()) AND YEAR(date) = YEAR(CURDATE()) GROUP BY status");
+$monthStats = $db->query("SELECT a.status, COUNT(*) as count FROM attendance a $attendanceJoin $monthWhereStr GROUP BY a.status");
 
 // Get recent attendance history (last 30 days, grouped by date)
-$attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present_count, SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent_count, SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) as late_count, SUM(CASE WHEN a.status = 'on_leave' THEN 1 ELSE 0 END) as leave_count FROM attendance a WHERE a.date <= CURDATE() AND a.date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) GROUP BY a.date ORDER BY a.date DESC");
+$attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present_count, SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent_count, SUM(CASE WHEN a.status = 'late' THEN 1 ELSE 0 END) as late_count, SUM(CASE WHEN a.status = 'on_leave' THEN 1 ELSE 0 END) as leave_count FROM attendance a $attendanceJoin $attendanceWhereStr GROUP BY a.date ORDER BY a.date DESC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -232,7 +251,13 @@ $attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(C
                             <select name="employee_id" class="form-input" required>
                                 <option value="">Choose employee</option>
                                 <?php while ($emp = $employees->fetch_assoc()): ?>
-                                <option value="<?php echo $emp['id']; ?>"><?php echo htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name'] . ' (' . $emp['employee_code'] . ')'); ?></option>
+                                <?php 
+                                    $leaveStyle = $emp['is_on_leave'] ? 'style="color: var(--danger-color); font-weight: bold;"' : '';
+                                    $leaveLabel = $emp['is_on_leave'] ? ' - [ON LEAVE]' : '';
+                                ?>
+                                <option value="<?php echo $emp['id']; ?>" <?php echo $leaveStyle; ?>>
+                                    <?php echo htmlspecialchars($emp['first_name'] . ' ' . $emp['last_name'] . ' (' . $emp['employee_code'] . ')' . $leaveLabel); ?>
+                                </option>
                                 <?php endwhile; ?>
                             </select>
                         </div>
@@ -361,7 +386,8 @@ $attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(C
                             $date = date('Y-m-') . str_pad($day, 2, '0', STR_PAD_LEFT);
                             $isToday = $date === date('Y-m-d');
                             
-                            $attendanceCount = $db->query("SELECT COUNT(*) as count FROM attendance WHERE date = '$date' AND status = 'present'")->fetch_assoc()['count'];
+                            $calQueryStr = "SELECT COUNT(*) as count FROM attendance a " . $attendanceJoin . " WHERE a.date = '$date' AND a.status = 'present'" . (isset($deptId) ? " AND e.department_id = $deptId" : "");
+                            $attendanceCount = $db->query($calQueryStr)->fetch_assoc()['count'];
                             
                             $bgColor = $attendanceCount > 0 ? 'rgba(14, 165, 233, 0.1)' : 'transparent';
                             $borderColor = $isToday ? 'var(--primary-color)' : 'transparent';

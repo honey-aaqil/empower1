@@ -71,9 +71,9 @@ class Database
     {
         $this->connection = mysqli_init();
 
-        // Use persistent connection (p: prefix) + SSL for faster serverless reconnects
-        $host = 'p:' . DB_HOST;
-        $connected = $this->connection->real_connect($host, DB_USER, DB_PASS, DB_NAME, DB_PORT, NULL, MYSQLI_CLIENT_SSL);
+        // Remove persistent connection (p: prefix) to avoid 'forcibly closed by remote host' errors with serverless databases
+        $host = DB_HOST;
+        $connected = @$this->connection->real_connect($host, DB_USER, DB_PASS, DB_NAME, DB_PORT, NULL, MYSQLI_CLIENT_SSL);
 
         if (!$connected) {
             die("Connection failed: " . mysqli_connect_error());
@@ -152,6 +152,11 @@ function isHR()
 function isEmployee()
 {
     return isset($_SESSION['role']) && $_SESSION['role'] === 'employee';
+}
+
+function isManager()
+{
+    return isset($_SESSION['role']) && $_SESSION['role'] === 'manager';
 }
 
 function requireManagement()

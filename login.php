@@ -30,6 +30,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $_SESSION['email'] = $user['email'];
                 $_SESSION['role'] = $user['role'];
 
+                // Get department_id for managers/employees
+                $empStmt = $db->prepare("SELECT department_id FROM employees WHERE user_id = ?");
+                $empStmt->bind_param("i", $user['id']);
+                $empStmt->execute();
+                $empResult = $empStmt->get_result();
+                if ($empResult->num_rows > 0) {
+                    $_SESSION['department_id'] = $empResult->fetch_assoc()['department_id'];
+                }
+
                 // Update last login
                 $db->query("UPDATE users SET last_login = NOW() WHERE id = " . $user['id']);
 

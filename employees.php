@@ -17,12 +17,19 @@ if (isset($_GET['delete']) && isAdmin()) {
     redirect('employees.php?msg=deleted');
 }
 
-// Department filtering
+// Department filtering & Manager Data Isolation
 $filterDepartment = isset($_GET['department']) ? intval($_GET['department']) : 0;
 $filterDeptName = '';
 $whereClause = "";
 
-if ($filterDepartment > 0) {
+if (isManager() && isset($_SESSION['department_id'])) {
+    $filterDepartment = $_SESSION['department_id'];
+    $whereClause = " WHERE e.department_id = $filterDepartment";
+    $deptQuery = $db->query("SELECT name FROM departments WHERE id = $filterDepartment");
+    if ($deptQuery && $deptQuery->num_rows > 0) {
+        $filterDeptName = $deptQuery->fetch_assoc()['name'];
+    }
+} else if ($filterDepartment > 0) {
     $deptQuery = $db->query("SELECT name FROM departments WHERE id = $filterDepartment");
     if ($deptQuery && $deptQuery->num_rows > 0) {
         $filterDeptName = $deptQuery->fetch_assoc()['name'];

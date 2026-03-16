@@ -2,23 +2,66 @@
 require_once __DIR__ . '/includes/config.php';
 requireLogin();
 
+// Manager Data Isolation
+$empFilter = "";
+$empDeptFilter = "";
+$attJoin = "";
+$attFilter = "";
+$leaveJoin = "";
+$leaveFilter = "";
+if (isManager() && isset($_SESSION['department_id'])) {
+    $deptId = (int)$_SESSION['department_id'];
+    $empFilter = " AND department_id = $deptId";
+    $empDeptFilter = " AND e.department_id = $deptId";
+    $attJoin = " JOIN employees e ON attendance.employee_id = e.id ";
+    $attFilter = " AND e.department_id = $deptId";
+    $leaveJoin = " JOIN employees e ON leave_requests.employee_id = e.id ";
+    $leaveFilter = " AND e.department_id = $deptId";
+}
+
 // Get dashboard statistics
-$totalEmployees = $db->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active'")->fetch_assoc()['count'];
-$totalDepartments = $db->query("SELECT COUNT(*) as count FROM departments")->fetch_assoc()['count'];
-$todayAttendance = $db->query("SELECT COUNT(*) as count FROM attendance WHERE date = CURDATE() AND status = 'present'")->fetch_assoc()['count'];
-$pendingLeaves = $db->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'pending'")->fetch_assoc()['count'];
+$totalEmployees = $db->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active' $empFilter")->fetch_assoc()['count'];
+$totalDepartments = isManager() ? 1 : $db->query("SELECT COUNT(*) as count FROM departments")->fetch_assoc()['count'];
+$todayAttendance = $db->query("SELECT COUNT(*) as count FROM attendance $attJoin WHERE date = CURDATE() AND status = 'present' $attFilter")->fetch_assoc()['count'];
+$pendingLeaves = (int) $db->query("SELECT COUNT(*) as count FROM leave_requests $leaveJoin WHERE status = 'pending' $leaveFilter")->fetch_assoc()['count'];
+
+// Real-time stat changes calculations
+$lastMonthCount = (int) $db->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active' AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH) $empFilter")->fetch_assoc()['count'];
+if ($lastMonthCount > 0) {
+    $empGrowth = round((($totalEmployees - $lastMonthCount) / $lastMonthCount) * 100, 1);
+} else {
+    $empGrowth = $totalEmployees > 0 ? 100 : 0;
+}
+$empGrowthClass = $empGrowth >= 0 ? 'positive' : 'warning';
+$empGrowthIcon = $empGrowth >= 0 ? 'fa-arrow-up' : 'fa-arrow-down';
+$empGrowthText = ($empGrowth > 0 ? '+' : '') . $empGrowth . '% from last month';
+
+$deptStatClass = 'positive';
+$deptStatIcon = 'fa-check';
+$deptStatText = 'All active';
+
+$attendanceRate = $totalEmployees > 0 ? round(($todayAttendance / $totalEmployees) * 100, 1) : 0;
+$attStatClass = $attendanceRate >= 85 ? 'positive' : 'warning';
+$attStatIcon = $attendanceRate >= 85 ? 'fa-arrow-up' : 'fa-arrow-down';
+$attStatText = $attendanceRate . '% present';
+
+$leaveStatClass = $pendingLeaves > 0 ? 'warning' : 'positive';
+$leaveStatIcon = $pendingLeaves > 0 ? 'fa-exclamation' : 'fa-check';
+$leaveStatText = $pendingLeaves > 0 ? ($pendingLeaves . ' pending') : 'All caught up';
 
 // Get recent employees
-$recentEmployees = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id ORDER BY e.created_at DESC LIMIT 5");
+$recentEmployees = $db->query("SELECT e.*, d.name as department_name FROM employees e LEFT JOIN departments d ON e.department_id = d.id WHERE 1=1 $empDeptFilter ORDER BY e.created_at DESC LIMIT 5");
 
+$attQueryJoin = isManager() ? " JOIN employees e ON a.employee_id = e.id " : "";
 // Get attendance data for chart
 $attQuery = $db->query("
-    SELECT DATE_FORMAT(date, '%a') as day, 
-    SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present_count,
-    SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent_count
-    FROM attendance 
-    WHERE date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
-    GROUP BY date, day ORDER BY date ASC LIMIT 5
+    SELECT DATE_FORMAT(a.date, '%a') as day, 
+    SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present_count,
+    SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent_count
+    FROM attendance a
+    $attQueryJoin
+    WHERE a.date >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) $attFilter
+    GROUP BY a.date, day ORDER BY a.date ASC LIMIT 5
 ");
 $attLabels = [];
 $attPresent = [];
@@ -30,7 +73,7 @@ while ($row = $attQuery->fetch_assoc()) {
 }
 
 // Get department distribution
-$deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departments d LEFT JOIN employees e ON d.id = e.department_id GROUP BY d.id, d.name");
+$deptDistribution = $db->query("SELECT d.name, COUNT(e.id) as count FROM departments d LEFT JOIN employees e ON d.id = e.department_id WHERE 1=1 $empDeptFilter GROUP BY d.id, d.name");
 $deptLabels = [];
 $deptData = [];
 while ($row = $deptDistribution->fetch_assoc()) {
@@ -164,7 +207,6 @@ endif; ?>
                 </div>
             </div>
 
-            <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-header">
@@ -176,9 +218,9 @@ endif; ?>
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+12% from last month</span>
+                    <div class="stat-change <?php echo $empGrowthClass; ?>">
+                        <i class="fas <?php echo $empGrowthIcon; ?>"></i>
+                        <span><?php echo $empGrowthText; ?></span>
                     </div>
                 </div>
 
@@ -192,9 +234,9 @@ endif; ?>
                             <i class="fas fa-building"></i>
                         </div>
                     </div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-check"></i>
-                        <span>All active</span>
+                    <div class="stat-change <?php echo $deptStatClass; ?>">
+                        <i class="fas <?php echo $deptStatIcon; ?>"></i>
+                        <span><?php echo $deptStatText; ?></span>
                     </div>
                 </div>
 
@@ -208,9 +250,9 @@ endif; ?>
                             <i class="fas fa-clock"></i>
                         </div>
                     </div>
-                    <div class="stat-change positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>95% present</span>
+                    <div class="stat-change <?php echo $attStatClass; ?>">
+                        <i class="fas <?php echo $attStatIcon; ?>"></i>
+                        <span><?php echo $attStatText; ?></span>
                     </div>
                 </div>
 
@@ -224,9 +266,9 @@ endif; ?>
                             <i class="fas fa-calendar-alt"></i>
                         </div>
                     </div>
-                    <div class="stat-change warning">
-                        <i class="fas fa-exclamation"></i>
-                        <span>Needs attention</span>
+                    <div class="stat-change <?php echo $leaveStatClass; ?>">
+                        <i class="fas <?php echo $leaveStatIcon; ?>"></i>
+                        <span><?php echo $leaveStatText; ?></span>
                     </div>
                 </div>
             </div>

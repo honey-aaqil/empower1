@@ -24,7 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['apply_leave'])) {
 }
 
 // Handle approve/reject
-if (isset($_GET['action']) && isset($_GET['id']) && (isAdmin() || $_SESSION['role'] === 'hr')) {
+// Only admin, hr, or manager can approve/reject
+if (isset($_GET['action']) && isset($_GET['id']) && (isAdmin() || isHR() || isManager())) {
     $id = intval($_GET['id']);
     $action = $_GET['action'] === 'approve' ? 'approved' : 'rejected';
     $userId = $_SESSION['user_id'];
@@ -38,11 +39,20 @@ if (isEmployee()) {
     $empId = $db->query("SELECT id FROM employees WHERE user_id = {$_SESSION['user_id']}")->fetch_assoc()['id'] ?? 0;
     $leaves = $db->query("SELECT l.*, e.first_name, e.last_name, e.employee_code, a.username as approved_by_name FROM leave_requests l JOIN employees e ON l.employee_id = e.id LEFT JOIN users a ON l.approved_by = a.id WHERE l.employee_id = $empId ORDER BY l.created_at DESC");
 } else {
-    $leaves = $db->query("SELECT l.*, e.first_name, e.last_name, e.employee_code, a.username as approved_by_name FROM leave_requests l JOIN employees e ON l.employee_id = e.id LEFT JOIN users a ON l.approved_by = a.id ORDER BY l.created_at DESC");
+    $empFilter = "";
+    if (isManager() && isset($_SESSION['department_id'])) {
+        $deptId = (int)$_SESSION['department_id'];
+        $empFilter = " WHERE e.department_id = $deptId ";
+    }
+    $leaves = $db->query("SELECT l.*, e.first_name, e.last_name, e.employee_code, a.username as approved_by_name FROM leave_requests l JOIN employees e ON l.employee_id = e.id LEFT JOIN users a ON l.approved_by = a.id $empFilter ORDER BY l.created_at DESC");
 }
 
 // Get employees for dropdown
-$employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE status = 'active' ORDER BY first_name");
+$empFilter2 = "";
+if (isManager() && isset($_SESSION['department_id'])) {
+    $empFilter2 = " AND department_id = " . (int)$_SESSION['department_id'];
+}
+$employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE status = 'active' $empFilter2 ORDER BY first_name");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -172,12 +182,22 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
 
             <!-- Leave Stats -->
             <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <?php
+                $leaveStatJoin = "";
+                $leaveStatBaseWhere = "";
+                if (isManager() && isset($_SESSION['department_id'])) {
+                    $leaveStatJoin = " JOIN employees e ON l.employee_id = e.id ";
+                    $leaveStatBaseWhere = " AND e.department_id = " . (int)$_SESSION['department_id'];
+                }
+                
+                $pendingCount = $db->query("SELECT COUNT(*) as count FROM leave_requests l $leaveStatJoin WHERE l.status = 'pending' $leaveStatBaseWhere")->fetch_assoc()['count'];
+                $approvedCount = $db->query("SELECT COUNT(*) as count FROM leave_requests l $leaveStatJoin WHERE l.status = 'approved' $leaveStatBaseWhere")->fetch_assoc()['count'];
+                $rejectedCount = $db->query("SELECT COUNT(*) as count FROM leave_requests l $leaveStatJoin WHERE l.status = 'rejected' $leaveStatBaseWhere")->fetch_assoc()['count'];
+                ?>
                 <div class="stat-card">
                     <div class="stat-header">
                         <div>
-                            <div class="stat-value">
-                                <?php echo $db->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'pending'")->fetch_assoc()['count']; ?>
-                            </div>
+                            <div class="stat-value"><?php echo $pendingCount; ?></div>
                             <div class="stat-label">Pending</div>
                         </div>
                         <div class="stat-icon orange">
@@ -189,9 +209,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                 <div class="stat-card">
                     <div class="stat-header">
                         <div>
-                            <div class="stat-value">
-                                <?php echo $db->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'approved'")->fetch_assoc()['count']; ?>
-                            </div>
+                            <div class="stat-value"><?php echo $approvedCount; ?></div>
                             <div class="stat-label">Approved</div>
                         </div>
                         <div class="stat-icon green">
@@ -203,9 +221,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                 <div class="stat-card">
                     <div class="stat-header">
                         <div>
-                            <div class="stat-value">
-                                <?php echo $db->query("SELECT COUNT(*) as count FROM leave_requests WHERE status = 'rejected'")->fetch_assoc()['count']; ?>
-                            </div>
+                            <div class="stat-value"><?php echo $rejectedCount; ?></div>
                             <div class="stat-label">Rejected</div>
                         </div>
                         <div class="stat-icon danger">
@@ -269,7 +285,7 @@ $employees = $db->query("SELECT id, first_name, last_name FROM employees WHERE s
                                     </span>
                                 </td>
                                 <td>
-                                    <?php if ($leave['status'] === 'pending' && (isAdmin() || $_SESSION['role'] === 'hr')): ?>
+                                    <?php if ($leave['status'] === 'pending' && (isAdmin() || isHR() || isManager())): ?>
                                     <div class="action-btns">
                                         <a href="?action=approve&id=<?php echo $leave['id']; ?>" class="action-btn view" title="Approve">
                                             <i class="fas fa-check"></i>
