@@ -109,7 +109,6 @@ endif; ?>
                         <input type="checkbox" name="remember" style="width: 18px; height: 18px;">
                         <span style="color: var(--text-muted);">Remember me</span>
                     </label>
-                    <a href="forgot-password.php" style="color: var(--primary-color); text-decoration: none; font-size: 0.9rem;">Forgot password?</a>
                 </div>
                 
                 <button type="submit" class="btn btn-primary btn-block">

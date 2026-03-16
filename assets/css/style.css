@@ -1413,19 +1413,67 @@ textarea.form-input::-webkit-scrollbar-thumb:hover {
     transform: translateY(-50%) scale(1.05);
 }
 
-/* Responsive */
+/* Responsive & Mobile Elements */
+.menu-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: var(--border-radius);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 1.2rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.menu-toggle:hover {
+    background: var(--border-color);
+    color: var(--primary-color);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(10, 14, 26, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 90;
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
 @media (max-width: 1024px) {
+    .menu-toggle {
+        display: inline-flex;
+        margin-right: 15px;
+    }
+    
     .sidebar {
         transform: translateX(-100%);
         transition: var(--transition);
+        z-index: 100;
     }
 
     .sidebar.active {
         transform: translateX(0);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
     }
 
     .main-content {
         margin-left: 0;
+        width: 100vw;
     }
 
     .stats-grid {
@@ -1439,6 +1487,20 @@ textarea.form-input::-webkit-scrollbar-thumb:hover {
         gap: 15px;
         align-items: flex-start;
     }
+    
+    .page-header > div:first-child {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    .header-actions {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: flex-start;
+    }
 
     .stats-grid {
         grid-template-columns: 1fr;
@@ -1446,6 +1508,28 @@ textarea.form-input::-webkit-scrollbar-thumb:hover {
 
     .ai-features-grid {
         grid-template-columns: 1fr;
+    }
+    
+    /* Make tables responsive */
+    .card-body, .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 600px;
+    }
+    
+    /* Form grids to single column on mobile */
+    form > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+    
+    .modal {
+        width: 95%;
+        margin: 10px;
+        max-height: 90vh;
+        overflow-y: auto;
     }
 }
 

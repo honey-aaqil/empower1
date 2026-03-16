@@ -8,7 +8,12 @@ if (!$id) {
 }
 
 // Get employee data
-$stmt = $db->prepare("SELECT * FROM employees WHERE id = ?");
+$stmt = $db->prepare("
+    SELECT e.*, u.username, u.role as user_role, u.id as user_account_id 
+    FROM employees e 
+    LEFT JOIN users u ON e.user_id = u.id 
+    WHERE e.id = ?
+");
 $stmt->bind_param("i", $id);
 $stmt->execute();
 $employee = $stmt->get_result()->fetch_assoc();
@@ -16,6 +21,14 @@ $employee = $stmt->get_result()->fetch_assoc();
 if (!$employee) {
     $_SESSION['error'] = 'Employee not found';
     redirect('employees.php');
+}
+
+// Manager Data Isolation Check
+if (isManager() && isset($_SESSION['department_id'])) {
+    if ($employee['department_id'] != $_SESSION['department_id']) {
+        $_SESSION['error'] = 'Access Denied: You can only edit employees in your own department.';
+        redirect('employees.php');
+    }
 }
 
 // Get departments
@@ -27,7 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lastName = sanitize($_POST['last_name']);
     $email = sanitize($_POST['email']);
     $phone = sanitize($_POST['phone'] ?? '');
-    $departmentId = intval($_POST['department_id']);
+    
+    // Prevent managers from changing an employee's department
+    $departmentId = (isManager() && isset($_SESSION['department_id'])) 
+        ? intval($_SESSION['department_id']) 
+        : intval($_POST['department_id']);
+        
     $designation = sanitize($_POST['designation']);
     $joiningDate = sanitize($_POST['joining_date']);
     $employmentType = sanitize($_POST['employment_type'] ?? 'full_time');
@@ -35,18 +53,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $address = sanitize($_POST['address'] ?? '');
     $status = sanitize($_POST['status'] ?? 'active');
 
+    $username = '';
+    $userRole = '';
+    $password = '';
+    $accountError = '';
+
+    if (isAdmin()) {
+        $username = sanitize($_POST['username'] ?? '');
+        $userRole = sanitize($_POST['user_role'] ?? '');
+        $password = $_POST['password'] ?? '';
+
+        if (empty($username) || empty($userRole)) {
+            $accountError = 'Username and role are required for the account.';
+        } else {
+            $checkUser = $db->prepare("SELECT id FROM users WHERE username = ? AND id != ?");
+            $checkUserId = $employee['user_account_id'] ?? 0;
+            $checkUser->bind_param("si", $username, $checkUserId);
+            $checkUser->execute();
+            if ($checkUser->get_result()->num_rows > 0) {
+                $accountError = 'Username already taken by another account.';
+            }
+        }
+    }
+
     // Check if email exists for another employee
     $checkEmail = $db->prepare("SELECT id FROM employees WHERE email = ? AND id != ?");
     $checkEmail->bind_param("si", $email, $id);
     $checkEmail->execute();
     if ($checkEmail->get_result()->num_rows > 0) {
         $_SESSION['error'] = 'Email already used by another employee';
+    } else if ($accountError) {
+        $_SESSION['error'] = $accountError;
     }
     else {
         $updateStmt = $db->prepare("UPDATE employees SET first_name=?, last_name=?, email=?, phone=?, department_id=?, designation=?, joining_date=?, employment_type=?, salary=?, address=?, status=? WHERE id=?");
         $updateStmt->bind_param("ssssisssdssi", $firstName, $lastName, $email, $phone, $departmentId, $designation, $joiningDate, $employmentType, $salary, $address, $status, $id);
 
         if ($updateStmt->execute()) {
+            // Update User Account if Admin
+            if (isAdmin()) {
+                if (!empty($employee['user_account_id'])) {
+                    if (!empty($password)) {
+                        $hash = password_hash($password, PASSWORD_DEFAULT);
+                        $uStmt = $db->prepare("UPDATE users SET username=?, role=?, password=? WHERE id=?");
+                        $uStmt->bind_param("sssi", $username, $userRole, $hash, $employee['user_account_id']);
+                    } else {
+                        $uStmt = $db->prepare("UPDATE users SET username=?, role=? WHERE id=?");
+                        $uStmt->bind_param("ssi", $username, $userRole, $employee['user_account_id']);
+                    }
+                    $uStmt->execute();
+                } else {
+                    $hash = password_hash(empty($password) ? 'employee123' : $password, PASSWORD_DEFAULT);
+                    $uStmt = $db->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)");
+                    $uStmt->bind_param("ssss", $username, $email, $hash, $userRole);
+                    if ($uStmt->execute()) {
+                        $newUserId = $uStmt->insert_id;
+                        $db->query("UPDATE employees SET user_id = $newUserId WHERE id = $id");
+                    }
+                }
+            }
+
             // Log activity
             $db->query("INSERT INTO activity_logs (user_id, action, details, ip_address) VALUES ({$_SESSION['user_id']}, 'edit_employee', 'Updated employee ID: $id', '{$_SERVER['REMOTE_ADDR']}')");
             $_SESSION['success'] = 'Employee updated successfully';
@@ -210,15 +276,28 @@ endif; ?>
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="form-group">
                                 <label class="form-label">Department *</label>
-                                <select name="department_id" class="form-input" required>
-                                    <option value="">Select Department</option>
-                                    <?php while ($dept = $departments->fetch_assoc()): ?>
-                                    <option value="<?php echo $dept['id']; ?>" <?php echo $dept['id'] == $employee['department_id'] ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($dept['name']); ?>
-                                    </option>
-                                    <?php
-endwhile; ?>
-                                </select>
+                                <?php if (isManager()): ?>
+                                    <!-- Managers cannot change an employee's department -->
+                                    <select name="department_id" class="form-input" style="background-color: rgba(0,0,0,0.2); cursor: not-allowed;" disabled>
+                                        <?php while ($dept = $departments->fetch_assoc()): ?>
+                                            <?php if ($dept['id'] == $employee['department_id']): ?>
+                                            <option value="<?php echo $dept['id']; ?>" selected>
+                                                <?php echo htmlspecialchars($dept['name']); ?>
+                                            </option>
+                                            <?php endif; ?>
+                                        <?php endwhile; ?>
+                                    </select>
+                                    <input type="hidden" name="department_id" value="<?php echo $employee['department_id']; ?>">
+                                <?php else: ?>
+                                    <select name="department_id" class="form-input" required>
+                                        <option value="">Select Department</option>
+                                        <?php while ($dept = $departments->fetch_assoc()): ?>
+                                        <option value="<?php echo $dept['id']; ?>" <?php echo $dept['id'] == $employee['department_id'] ? 'selected' : ''; ?>>
+                                            <?php echo htmlspecialchars($dept['name']); ?>
+                                        </option>
+                                        <?php endwhile; ?>
+                                    </select>
+                                <?php endif; ?>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Designation *</label>
@@ -262,6 +341,32 @@ endwhile; ?>
                             <label class="form-label">Address</label>
                             <textarea name="address" class="form-input" rows="3"><?php echo htmlspecialchars($employee['address'] ?? ''); ?></textarea>
                         </div>
+                        
+                        <?php if (isAdmin()): ?>
+                        <hr style="border:0; border-top: 1px solid var(--border-color); margin: 30px 0;">
+                        <h4 style="margin-bottom: 20px; color: var(--primary-color); font-size: 1.2rem;"><i class="fas fa-key"></i> Account &amp; Authentication</h4>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Username</label>
+                                <input type="text" name="username" class="form-input" value="<?php echo htmlspecialchars($employee['username'] ?? ''); ?>" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">System Role</label>
+                                <select name="user_role" class="form-input" required>
+                                    <option value="employee" <?php echo ($employee['user_role'] ?? '') === 'employee' ? 'selected' : ''; ?>>Employee (Self-Service)</option>
+                                    <option value="manager" <?php echo ($employee['user_role'] ?? '') === 'manager' ? 'selected' : ''; ?>>Department Manager</option>
+                                    <option value="hr" <?php echo ($employee['user_role'] ?? '') === 'hr' ? 'selected' : ''; ?>>HR Manager</option>
+                                    <option value="admin" <?php echo ($employee['user_role'] ?? '') === 'admin' ? 'selected' : ''; ?>>Administrator</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">New Password</label>
+                            <input type="password" name="password" class="form-input" placeholder="Leave blank to keep existing password" autocomplete="new-password">
+                        </div>
+                        <?php endif; ?>
                         
                         <div style="display: flex; gap: 15px; margin-top: 25px;">
                             <button type="submit" class="btn btn-primary">

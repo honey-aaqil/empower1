@@ -9,11 +9,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     $now = date('H:i:s');
     
     if ($_POST['action'] === 'checkin') {
-        $stmt = $db->prepare("INSERT INTO attendance (employee_id, date, check_in, status) VALUES (?, ?, ?, 'present') ON DUPLICATE KEY UPDATE check_in = ?");
-        $stmt->bind_param("isss", $employeeId, $today, $now, $now);
+        $stmt = $db->prepare("INSERT INTO attendance (employee_id, date, check_in, status) VALUES (?, ?, ?, 'present') ON DUPLICATE KEY UPDATE check_in = IFNULL(check_in, VALUES(check_in)), status = 'present'");
+        $stmt->bind_param("isss", $employeeId, $today, $now);
         $stmt->execute();
     } elseif ($_POST['action'] === 'checkout') {
         $db->query("UPDATE attendance SET check_out = '$now' WHERE employee_id = $employeeId AND date = '$today'");
+    } elseif ($_POST['action'] === 'absent') {
+        $stmt = $db->prepare("INSERT INTO attendance (employee_id, date, status) VALUES (?, ?, 'absent') ON DUPLICATE KEY UPDATE check_out = NULL, status = 'absent'");
+        $stmt->bind_param("is", $employeeId, $today);
+        $stmt->execute();
     }
     
     redirect('attendance.php');
@@ -261,13 +265,17 @@ $attendanceHistory = $db->query("SELECT a.date, COUNT(*) as total_records, SUM(C
                                 <?php endwhile; ?>
                             </select>
                         </div>
-                        <button type="submit" name="action" value="checkin" class="btn btn-success" style="padding: 14px 30px;">
+                        <button type="submit" name="action" value="checkin" class="btn btn-success" style="padding: 14px 20px;">
                             <i class="fas fa-sign-in-alt"></i>
                             Check In
                         </button>
-                        <button type="submit" name="action" value="checkout" class="btn btn-danger" style="padding: 14px 30px;">
+                        <button type="submit" name="action" value="checkout" class="btn btn-warning" style="padding: 14px 20px;">
                             <i class="fas fa-sign-out-alt"></i>
                             Check Out
+                        </button>
+                        <button type="submit" name="action" value="absent" class="btn btn-danger" style="padding: 14px 20px;" onclick="return confirm('Are you sure you want to mark this employee as absent for today?');">
+                            <i class="fas fa-user-times"></i>
+                            Mark Absent
                         </button>
                     </form>
                 </div>

@@ -54,13 +54,46 @@ function initNavigation() {
         });
     });
 
-    // Mobile menu toggle
-    const menuToggle = document.querySelector('.menu-toggle');
+    // Mobile menu toggle injection
+    let menuToggle = document.querySelector('.menu-toggle');
+    const pageHeader = document.querySelector('.page-header');
     const sidebar = document.querySelector('.sidebar');
+    const pageTitle = document.querySelector('.page-title');
+
+    // Create a container for the title and toggle to flex align them correctly
+    if (!menuToggle && pageHeader && pageTitle) {
+        menuToggle = document.createElement('button');
+        menuToggle.className = 'menu-toggle';
+        menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+        
+        const titleContainer = document.createElement('div');
+        titleContainer.style.display = 'flex';
+        titleContainer.style.alignItems = 'center';
+        
+        pageHeader.insertBefore(titleContainer, pageTitle);
+        titleContainer.appendChild(menuToggle);
+        titleContainer.appendChild(pageTitle);
+    }
+
+    let sidebarOverlay = document.querySelector('.sidebar-overlay');
+    if (!sidebarOverlay && sidebar) {
+        sidebarOverlay = document.createElement('div');
+        sidebarOverlay.className = 'sidebar-overlay';
+        document.body.appendChild(sidebarOverlay);
+    }
 
     if (menuToggle && sidebar) {
-        menuToggle.addEventListener('click', () => {
+        menuToggle.addEventListener('click', (e) => {
+            e.preventDefault();
             sidebar.classList.toggle('active');
+            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
+        });
+    }
+
+    if (sidebarOverlay && sidebar) {
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
         });
     }
 }

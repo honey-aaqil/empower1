@@ -22,8 +22,8 @@ if (isManager() && isset($_SESSION['department_id'])) {
 // Get dashboard statistics
 $totalEmployees = $db->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active' $empFilter")->fetch_assoc()['count'];
 $totalDepartments = isManager() ? 1 : $db->query("SELECT COUNT(*) as count FROM departments")->fetch_assoc()['count'];
-$todayAttendance = $db->query("SELECT COUNT(*) as count FROM attendance $attJoin WHERE date = CURDATE() AND status = 'present' $attFilter")->fetch_assoc()['count'];
-$pendingLeaves = (int) $db->query("SELECT COUNT(*) as count FROM leave_requests $leaveJoin WHERE status = 'pending' $leaveFilter")->fetch_assoc()['count'];
+$todayAttendance = $db->query("SELECT COUNT(*) as count FROM attendance $attJoin WHERE attendance.date = CURDATE() AND attendance.status = 'present' $attFilter")->fetch_assoc()['count'];
+$pendingLeaves = (int) $db->query("SELECT COUNT(*) as count FROM leave_requests $leaveJoin WHERE leave_requests.status = 'pending' $leaveFilter")->fetch_assoc()['count'];
 
 // Real-time stat changes calculations
 $lastMonthCount = (int) $db->query("SELECT COUNT(*) as count FROM employees WHERE status = 'active' AND created_at < DATE_SUB(NOW(), INTERVAL 1 MONTH) $empFilter")->fetch_assoc()['count'];
